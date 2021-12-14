@@ -1,0 +1,34 @@
+{
+  "name": "obelisk",
+  "version": "1.0.0",
+  "description": "Obelisk Bot developed in js",
+  "main": "src/shard.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rajuabedin/ObeliskJS.git"
+  },
+  "author": "THunderGod",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rajuabedin/ObeliskJS/issues"
+  },
+  "homepage": "https://github.com/rajuabedin/ObeliskJS#readme",
+  "dependencies": {
+    "@discordjs/builders": "^0.6.0",
+    "@discordjs/rest": "^0.1.0-canary.0",
+    "canvas": "^2.8.0",
+    "crypto": "^1.0.1",
+    "discord-api-types": "^0.22.0",
+    "discord.js": "^13.1.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "glob": "^7.2.0",
+    "mysql": "^2.18.1",
+    "mysql2": "^2.3.0",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.5"
+  }
+}

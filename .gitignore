@@ -1,0 +1,5 @@
+src/.env
+.idea
+src/User_Log
+logs
+node_modules
