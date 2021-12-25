@@ -21,6 +21,9 @@ module.exports = new Event("interactionCreate", async (client, interaction) => {
 
 
         let userInfo = await interaction.client.getUserAccount(interaction.user.id);
+
+        if (userInfo === undefined) return await interaction.reply({ embeds: [interaction.client.redEmbed('No account found! Please create one using interaction `create`')], ephemeral: true })
+
         const command = client.commands.find(cmd => cmd.data.name == interaction.commandName);
         command.execute(interaction, userInfo);
     } catch (error) {
