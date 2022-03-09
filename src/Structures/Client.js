@@ -172,7 +172,7 @@ class Client extends Discord.Client {
 
     redEmbed(text, tittle = "") {
         const textToEmbed = new Discord.MessageEmbed()
-            .setColor('0xe1143d')
+            .setColor('0xed4245')
             .setTitle(tittle)
             .setURL('https://obelisk.club/')
             .setDescription(text)
@@ -181,7 +181,7 @@ class Client extends Discord.Client {
 
     redEmbedImage(text, tittle = "", user) {
         const textToEmbed = new Discord.MessageEmbed()
-            .setColor('0xe1143d')
+            .setColor('0xed4245')
             .setAuthor(tittle, user.avatarURL())
             .setURL('https://obelisk.club/')
             .setDescription(text)
