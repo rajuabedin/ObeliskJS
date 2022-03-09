@@ -34,8 +34,8 @@ module.exports = {
             } else {
                 // check if gathering need captcha
                 if (captchaData.captcha_count > 0 && captchaData.hunt < 30) {
-                    await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED_GATHERING_CAPTCHA"), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
-                    return [true, true];
+                    await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "HUNT_CAPTCHA").format("Gathering"), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
+                    return [true, false];
                 } else if (captchaData.hunt > 30) {
                     // START MACRO DETECTOR
                     const width = 500
@@ -1029,7 +1029,11 @@ module.exports = {
 
 
         } catch (error) {
-            await interaction.reply({ embeds: [interaction.client.redEmbed("Please try again later.", "Error!!")], ephemeral: true });
+            if (interaction.replied) {
+                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
+            } else {
+                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
+            }
             errorLog.error(error.message, { 'command_name': interaction.commandName });
         }
 
