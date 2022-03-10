@@ -194,46 +194,34 @@ module.exports = {
             // patreon
             const donatorData = await interaction.client.databaseSelectData("select * from patreon_donators where user_id = ?", [interaction.user.id]);
 
+            if (donatorData[0] !== undefined) {
+                if (donatorData[0]["donation_rank"] > 2) {
+                    commandCDTimeSec = Math.floor(commandCDTimeSec * 0.8);
+                }
+            }
 
             if (userCD[0] === undefined) {
+                var tempDate = new Date();
+                tempDate.setSeconds(tempDate.getSeconds() + commandCDTimeSec);
                 dateStr =
-                    ("00" + date.getDate()).slice(-2) + "/" +
-                    ("00" + (date.getMonth() + 1)).slice(-2) + "/" +
+                    ("00" + tempDate.getDate()).slice(-2) + "/" +
+                    ("00" + (tempDate.getMonth() + 1)).slice(-2) + "/" +
                     date.getFullYear() + " " +
-                    ("00" + date.getHours()).slice(-2) + ":" +
-                    ("00" + date.getMinutes()).slice(-2) + ":" +
-                    ("00" + date.getSeconds()).slice(-2);
+                    ("00" + tempDate.getHours()).slice(-2) + ":" +
+                    ("00" + tempDate.getMinutes()).slice(-2) + ":" +
+                    ("00" + tempDate.getSeconds()).slice(-2);
                 await interaction.client.databaseEditData("insert into user_cd (user_id, hunt) values(?, ?)", [interaction.user.id, dateStr])
-                userOnCD = false;
             } else {
                 if (userCD[0].hunt !== 'null') {
                     let elapsedTimeFromHunt = Math.floor((interaction.client.strToDate(userCD[0].hunt).getTime() - date.getTime()) / 1000);
-
-
-
-
-
-
-
-                    if (donatorData[0] !== undefined) {
-                        if (donatorData[0]["donation_rank"] > 2) {
-                            commandCDTimeSec = Math.floor(commandCDTimeSec * 0.8);
-                        }
-                    }
-
-
                     // check remaining time 
-                    if (commandCDTimeSec + elapsedTimeFromHunt > 0) {
-                        return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_P").format(" `" + (commandCDTimeSec + elapsedTimeFromHunt) + "`s", "https://www.patreon.com/obelisk_rpg1"), interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_T").format("Hunt"))], ephemeral: true });;
+                    if (elapsedTimeFromHunt > 0) {
+                        return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_P").format(" `" + (elapsedTimeFromHunt) + "`s", "https://www.patreon.com/obelisk_rpg1"), interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_T").format("Hunt"))], ephemeral: true });;
                     }
                 }
 
-                userOnCD = false;
             }
 
-            if (userOnCD) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_P").format(" `" + (commandCDTimeSec + elapsedTimeFromHunt) + "`s", "https://www.patreon.com/obelisk_rpg1"), interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_T").format("Hunt"))], ephemeral: true });
-            }
 
             await userDailyLogger(interaction, "hunt", "Hunt Started")
 
@@ -1011,14 +999,15 @@ module.exports = {
                     }
 
                     // update cd time on db 
-                    date = new Date();
+                    var tempDate = new Date();
+                    tempDate.setSeconds(tempDate.getSeconds() + commandCDTimeSec);
                     dateStr =
-                        ("00" + date.getDate()).slice(-2) + "/" +
-                        ("00" + (date.getMonth() + 1)).slice(-2) + "/" +
-                        date.getFullYear() + " " +
-                        ("00" + date.getHours()).slice(-2) + ":" +
-                        ("00" + date.getMinutes()).slice(-2) + ":" +
-                        ("00" + date.getSeconds()).slice(-2);
+                        ("00" + tempDate.getDate()).slice(-2) + "/" +
+                        ("00" + (tempDate.getMonth() + 1)).slice(-2) + "/" +
+                        tempDate.getFullYear() + " " +
+                        ("00" + tempDate.getHours()).slice(-2) + ":" +
+                        ("00" + tempDate.getMinutes()).slice(-2) + ":" +
+                        ("00" + tempDate.getSeconds()).slice(-2);
 
                     await interaction.client.databaseEditData("update user_cd set hunt = ? where user_id = ?", [dateStr, interaction.user.id]);
                     await interaction.client.databaseEditData("update users set boss_fight = ? where user_id = ?", ["0", interaction.user.id]);

@@ -288,6 +288,7 @@
     "ONLY_GROUP_LEADER": "Only the group leader can use this command!",
     "CHANGE_CLASS": "Please select your **new** class by entering the class number:",
     "COMMAND_CD": "Command in cooldown will be available in {}",
+    "COMMAND_CD_TITLE": "Commands Cooldown",
     "COMMAND_CD_T": "{} Command in CD",
     "COMMAND_CD_P": "Command in cd, available in {}.\nWanna decrease your waiting time and support us? Visit our [Patreon]({})",
     "COMMAND_CANCELLED": "Command cancelled",
