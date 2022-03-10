@@ -494,7 +494,7 @@
     "FAMILIAR_UPGRADE_S": "Familiar evolved successfully! New pet ID `{}`",
     "VOTE": "If you like our bot/server and have like 5 seconds to spare please vote, so other can join us and have fun with the bot too!\n**Voting the Server will give you:**\n<a:right:784919737292423198> {}\n**Voting the BOT will give you:**\n<a:right:784919737292423198> {} (*Double in the weekend*)\n\n**Vote Links**\n**[BOT VOTE LINK]({})** | **[SERVER VOTE LINK]({})**",
     "VOTE_REVIEW": "And if you have extra time leave a review too. <3",
-    "DAILY_REWARD_GOLD": "```Daily Reward: {} gold",
+    "DAILY_REWARD_GOLD": "Daily Reward: ```css\n{}```\n**Daily Streak:** {}",
     "DAILY_REWARD_DONATOR_MSG": "Thank you very much for your support! We really appreciate it!",
     "DAILY_REWARD_MARRIAGE": "Both partner done daily and as a reward you both receive:\n```css\n{} extra gold```\n**Marriage Daily Streak:** {}",
     "DAILY_REWARD_NEXT": "Your next daily reward is available in {}",
