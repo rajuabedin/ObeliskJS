@@ -1011,12 +1011,27 @@ module.exports = {
 
                     await interaction.client.databaseEditData("update user_cd set hunt = ? where user_id = ?", [dateStr, interaction.user.id]);
                     await interaction.client.databaseEditData("update users set boss_fight = ? where user_id = ?", ["0", interaction.user.id]);
+
+                    // check if reminder Enabled
+
+                    var userSettings = await interaction.client.databaseSelectData("select * from user_settings where user_id = ?", [interaction.user.id]);
+
+                    if (userSettings[0] === undefined) {
+                        userSettings = {
+                            h_reminder: "disabled",
+                            g_reminder: "disabled"
+                        }
+                        await interaction.client.databaseEditData("insert into user_settings (user_id) values (?)", [interaction.user.id]);
+                    } else {
+                        userSettings = userSettings[0];
+                    }
+
+                    if (userSettings.h_reminder === "enabled" && !playerDied) {
+                        await new Promise(r => setTimeout(r, commandCDTimeSec * 1000));
+                        await interaction.followUp({ content: `<@${interaction.user.id}>`, embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_READY'))] })
+                    }
                 }
             }
-
-
-
-
         } catch (error) {
             if (interaction.replied) {
                 await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });

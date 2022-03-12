@@ -213,6 +213,7 @@
     "GATHERING_UNLUCKY": "Unlucky! You were not able gather anything!",
     "GATHERING_COMPLETED": "Gathering Completed!",
     "GATHERING_READY": "Gathering command ready!",
+    "HUNT_READY": "Hunt command ready!",
     "EQ_DESTROY": "Do you really want to destroy this equipment? It will only return 20% of the materials. (Y = Yes, n = No)",
     "EQ_DESTROY_MONKEY": "Error! You cannot destroy an equipped item!",
     "EQ_ARMOR": "Equipped Armor",
