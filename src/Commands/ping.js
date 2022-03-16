@@ -1,5 +1,6 @@
 const Command = require('../Structures/Command.js');
 const errorLog = require('../Utility/logger').logger;
+const { MessageActionRow, MessageButton, MessageSelectMenu, MessageEmbed, MessageAttachment } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 
 module.exports = {
