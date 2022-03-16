@@ -5,14 +5,14 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('inventory')
-        .setDescription('Open your inventory.')
+        .setName('shop')
+        .setDescription("Opens pandora's shop.")
         .addStringOption(option => option
             .setName('order')
-            .setDescription("Order your inventory")
-            .addChoice("name", "item_name")
+            .setDescription("Order the shop")
+            .addChoice("name", "name")
             .addChoice("id", "id")
-            .addChoice("quantity", "quantity"))
+            .addChoice("currency", "currency"))
         .addStringOption(option => option
             .setName("search")
             .setDescription("Search item by name")),
@@ -36,28 +36,35 @@ module.exports = {
                 }, [])
             }
 
-            var userInventory = "";
+            var shopData = "";
             var searchName = interaction.options.getString('search');
             var orderBy = interaction.options.getString('order');
             var auroraValue = 0
 
-            if (searchName === null && orderBy === null) {
-                userInventory = await interaction.client.databaseSelectData("select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and user_inventory.item_name != 'Aurora' order by id ASC", [interaction.user.id])
-            } else if (searchName !== null && orderBy === null) {
-                userInventory = await interaction.client.databaseSelectData("select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and (user_inventory.item_name like ?) or (items.desc like ?) and user_inventory.item_name != 'Aurora' order by id ASC", [interaction.user.id, "%" + searchName + "%", "%" + searchName + "%"])
-            } else if (searchName === null && orderBy !== null) {
-                if (orderBy === "quantity") {
-                    userInventory = await interaction.client.databaseSelectData(`select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and user_inventory.item_name != 'Aurora' order by user_inventory.${orderBy} DESC`, [interaction.user.id])
-                } else {
-                    userInventory = await interaction.client.databaseSelectData(`select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and user_inventory.item_name != 'Aurora' order by user_inventory.${orderBy} ASC`, [interaction.user.id])
-                }
-            } else {
-                userInventory = await interaction.client.databaseSelectData(`select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and (user_inventory.item_name like ?) or (items.desc like ?) and user_inventory.item_name != 'Aurora' order by user_inventory.${orderBy} ASC`, [interaction.user.id, "%" + searchName + "%", "%" + searchName + "%"])
+            var icons = {
+                aurora: "<:Obelisk:784486454398943232>",
+                gold: "<:coin2:784486506051010561>"
             }
 
-            if (userInventory[0] === undefined && searchName === null) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'INVENTORY_EMPTY'))] });
-            } else if (userInventory[0] === undefined && searchName !== null) {
+            if (searchName === null && orderBy === null) {
+                shopData = await interaction.client.databaseSelectData("select shop.price, shop.currency, items.name, items.id, items.desc, items.type, items.value from shop inner join items on shop.item_id = items.id order by name ASC")
+            } else if (searchName !== null && orderBy === null) {
+                shopData = await interaction.client.databaseSelectData("select shop.price, shop.currency, items.name, items.id, items.desc, items.type, items.value from shop inner join items on shop.item_id = items.id where (items.name like ?) OR (items.desc like ?) order by name ASC", ["%" + searchName + "%", "%" + searchName + "%"])
+            } else if (searchName === null && orderBy !== null) {
+                if (orderBy === "currency") {
+                    shopData = await interaction.client.databaseSelectData(`select shop.price, shop.currency, items.name, items.id, items.desc, items.type, items.value from shop inner join items on shop.item_id = items.id order by shop.currency ASC`)
+                } else {
+                    shopData = await interaction.client.databaseSelectData(`select shop.price, shop.currency, items.name, items.id, items.desc, items.type, items.value from shop inner join items on shop.item_id = items.id order by items.${orderBy} ASC`)
+                }
+            } else {
+                if (orderBy === "currency") {
+                    shopData = await interaction.client.databaseSelectData(`select shop.price, shop.currency, items.name, items.id, items.desc, items.type, items.value from shop inner join items on shop.item_id = items.id where (items.name like ?) OR (items.desc like ?) order by shop.${orderBy} ASC`, ["%" + searchName + "%", "%" + searchName + "%"])
+                } else {
+                    shopData = await interaction.client.databaseSelectData(`select shop.price, shop.currency, items.name, items.id, items.desc, items.type, items.value from shop inner join items on shop.item_id = items.id where (items.name like ?) OR (items.desc like ?) order by items.${orderBy} ASC`, ["%" + searchName + "%", "%" + searchName + "%"])
+                }
+            }
+
+            if (shopData[0] === undefined && searchName !== null) {
                 return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SHOP_NF_NAME').format(searchName))] });
             } else {
                 auroraValue = await interaction.client.databaseSelectData("select * from user_inventory where user_id = ? and item_name = ?", [interaction.user.id, "Aurora"])
@@ -68,28 +75,32 @@ module.exports = {
                 }
                 var itemsPerPage = 4;
                 var newInventory = [];
-                var stringData = ""
+                var stringData = "";
 
-                for (var i = 0; i < userInventory.length; i++) {
+                for (var i = 0; i < shopData.length; i++) {
                     if (stringData === "") {
                         stringData = interaction.client.getWordLanguage(serverSettings.lang, 'INVENTORY_GOLD_AURORA').format(userInfo.gold, auroraValue)
                     }
-                    stringData += `\n\`ID ${userInventory[i].id}\` **${userInventory[i].item_name.replaceAll("_", " ")} [<:coin2:784486506051010561> ${userInventory[i].value}]**\n${userInventory[i].desc} - **${userInventory[i].quantity}**`
-
-                    if (((i + 1) % itemsPerPage) == 0 || i === userInventory.length - 1) {
+                    stringData += `\n\`ID ${shopData[i].id}\` **${shopData[i].name.replaceAll("_", " ")} [${icons[shopData[i].currency]} ${shopData[i].price}]**\n${shopData[i].desc}`
+                    if (((i + 1) % itemsPerPage) == 0 || i === shopData.length - 1) {
                         newInventory.push(stringData);
-                        stringData = ""
                     }
                 }
 
-                userInventory = newInventory;
+                shopData = newInventory;
 
-                var maxPages = userInventory.length;
 
-                var embed = interaction.client.bluePagesEmbed(userInventory[0], interaction.client.getWordLanguage(serverSettings.lang, 'INVENTORY'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages));
+                var maxPages = shopData.length;
+
+                var embed = new MessageEmbed()
+                    .setColor('0x14e188')
+                    .setAuthor("Pandora's Shop")
+                    .setImage(`https://obelisk.club/npc/Shop_banner.png`)
+                    .setDescription(shopData[0])
+                    .setFooter(interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages));
                 if (maxPages > 1) {
                     await interaction.reply({ embeds: [embed], components: [row] });
-                    buttonHandler(userInfo, interaction, serverSettings, userInventory);
+                    buttonHandler(userInfo, interaction, serverSettings, shopData);
                 } else {
                     await interaction.reply({ embeds: [embed] });
                 }
@@ -106,9 +117,9 @@ module.exports = {
     }
 }
 
-function buttonHandler(userInfo, interaction, serverSettings, userInventory) {
+function buttonHandler(userInfo, interaction, serverSettings, shopData) {
     let index = 0;
-    var maxPages = userInventory.length - 1;
+    var maxPages = shopData.length - 1;
 
     const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
 
@@ -124,7 +135,12 @@ function buttonHandler(userInfo, interaction, serverSettings, userInventory) {
             index = 0;
         if (index < 0)
             index = maxPages;
-        var embed = interaction.client.bluePagesEmbed(userInventory[index], interaction.client.getWordLanguage(serverSettings.lang, 'INVENTORY'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1));
+        var embed = new MessageEmbed()
+            .setColor('0x14e188')
+            .setAuthor("Pandora's Shop")
+            .setImage(`https://obelisk.club/npc/Shop_banner.png`)
+            .setDescription(shopData[index])
+            .setFooter(interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1));
         await i.update({ embeds: [embed], components: [row] });
     });
 
