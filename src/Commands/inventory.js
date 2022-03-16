@@ -49,7 +49,6 @@ module.exports = {
                 if (orderBy === "quantity") {
                     userInventory = await interaction.client.databaseSelectData(`select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? order by user_inventory.${orderBy} DESC`, [interaction.user.id])
                 } else {
-                    console.log(orderBy)
                     userInventory = await interaction.client.databaseSelectData(`select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? order by user_inventory.${orderBy} ASC`, [interaction.user.id])
                 }
             } else {
