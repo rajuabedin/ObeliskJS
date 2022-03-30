@@ -2,6 +2,7 @@ const Command = require('../Structures/Command.js');
 const errorLog = require('../Utility/logger').logger;
 const { MessageActionRow, MessageButton, MessageSelectMenu, MessageEmbed, MessageAttachment } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
+const userDailyLogger = require('../Utility/userDailyLogger');
 
 module.exports = {
     data: new SlashCommandBuilder()

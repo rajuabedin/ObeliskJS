@@ -1,9 +1,10 @@
 const Command = require('../Structures/Command.js');
 const errorLog = require('../Utility/logger').logger;
-const { MessageActionRow, MessageButton, MessageSelectMenu, MessageEmbed, MessageAttachment } = require('discord.js');
+const { MessageActionRow, MessageButton, MessageSelectMenu, MessageEmbed, MessageAttachment, WebhookClient } = require('discord.js');
 const { createCanvas } = require('canvas')
 const userDailyLogger = require('../Utility/userDailyLogger');
 const { SlashCommandBuilder } = require('@discordjs/builders');
+require('dotenv').config();
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -33,7 +34,7 @@ module.exports = {
                     // check if hunt need captcha
                     if (captchaData.captcha_count > 0 && captchaData.gathering < 30) {
                         await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "GATHERING_CAPTCHA").format("Hunt"), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
-                        return [true, true];
+                        return [true, false];
                     } else if (captchaData.gathering > 30) {
                         // START MACRO DETECTOR
                         const width = 500
@@ -123,6 +124,26 @@ module.exports = {
                                     embeds: [interaction.client.redEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED"), interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED_TITLE"), i.user)], components: [], files: []
                                 });
                                 collector.stop();
+                                if (captchaData.captcha_count + 1 > 4) {
+                                    const webhookClient = new WebhookClient({ id: process.env.webhookId, token: process.env.webhookToken });
+
+                                    const embed = new MessageEmbed()
+                                        .setAuthor(`${interaction.client.user.username} banned ${interaction.user.username}`, interaction.client.user.avatarURL())
+                                        .addField("User ID:", `\`${interaction.user.id}\``)
+                                        .addField("Reason:", `\`Selected wrong captcha text\``)
+                                        .setFooter("Ban Time")
+                                        .setTimestamp()
+                                        .setColor('#0xed4245')
+                                        .setThumbnail(interaction.user.avatarURL());
+
+                                    webhookClient.send({
+                                        content: `<@!${interaction.user.id}>`,
+                                        username: 'Obelisk Logger',
+                                        embeds: [embed],
+                                    });
+                                    await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_STOP_BAN").format(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED")), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
+                                    await interaction.client.databaseEditData("insert into ban_list (user_id, ban_by, reason) values (?, ?, ?)", [interaction.user.id, `735090182893862954`, "Captcha validation failed. You have selected the wrong captcha text."])
+                                }
                                 array = [true, false];
 
                             } else {
@@ -290,7 +311,7 @@ module.exports = {
                         userSettings = userSettings[0];
                     }
 
-                    if (userSettings.h_reminder === "enabled" && !playerDied) {
+                    if (userSettings.g_reminder === "enabled") {
                         await new Promise(r => setTimeout(r, commandCDTimeSec * 1000));
                         await interaction.followUp({ content: `<@${interaction.user.id}>`, embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_READY'))] })
                     }
