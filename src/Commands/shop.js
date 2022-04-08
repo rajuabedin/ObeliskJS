@@ -84,6 +84,8 @@ module.exports = {
                     stringData += `\n\`ID ${shopData[i].id}\` **${shopData[i].name.replaceAll("_", " ")} [${icons[shopData[i].currency]} ${shopData[i].price}]**\n${shopData[i].desc}`
                     if (((i + 1) % itemsPerPage) == 0 || i === shopData.length - 1) {
                         newInventory.push(stringData);
+                        stringData = "";
+
                     }
                 }
 
