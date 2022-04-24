@@ -30,6 +30,16 @@ module.exports = {
                 }
             }
 
+            if (user.id === interaction.user.id) {
+                if (userInfo.username != interaction.user.username) {
+                    await interaction.client.databaseEditData("update users set username = ? where user_id = ?", [user.username, user.id]);
+                }
+            } else {
+                if (secondUserData.username != user.username) {
+                    await interaction.client.databaseEditData("update users set username = ? where user_id = ?", [user.username, user.id]);
+                }
+            }
+
 
             const requestBody = {
                 user_id: user.id

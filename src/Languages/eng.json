@@ -434,6 +434,7 @@
     "FULL_BALANCE": "**Aurora**: **[{}](https://obelisk.club/)**\n**Gold in Bank**: **[{}/{}](https://obelisk.club/)**\n**Gold in Inventory**: **[{}](https://obelisk.club/)**\n",
     "BANK_ACC": "{} Bank Account",
     "BANK_ACC_BALANCE": "{} Account Balance",
+    "BALANCE": "**Aurora: [{}](https://obelisk.club)\nGold in Bank: [{}/{}](https://obelisk.club/)\nGold in Inventory: [{}](https://obelisk.club/)**\n",
     "BANK_GOLD": "Gold in Bank:",
     "BANK_INV_GOLD": "Gold in Inventory",
     "BANK_LAST_DEPOSIT": "Last Deposit:",
