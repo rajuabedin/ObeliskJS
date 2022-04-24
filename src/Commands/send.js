@@ -175,7 +175,7 @@ module.exports = {
                         .then(data => { return data });
                     //console.log(dmMessage)
                 }
-                await userDailyLogger(interaction, "send", `Sent [${quantity}] gold to [${interaction.options.getUser('player').username}]`);
+                await userDailyLogger(interaction, "send", `Sent [${quantity}] gold to [${interaction.options.getUser('player').username}][${interaction.options.getUser('player').id}]`);
             } else {
                 // check if id was passed
                 if (interaction.options.getInteger('id') == null) {
@@ -276,7 +276,7 @@ module.exports = {
                         .then(data => { return data });
                     //console.log(dmMessage)
                 }
-                await userDailyLogger(interaction, "send", `Sent [${quantity}x ${userItemInfo.item_name}] to [${interaction.options.getUser('player').username}]`);
+                await userDailyLogger(interaction, "send", `Sent [${quantity}x ${userItemInfo.item_name}] to [${interaction.options.getUser('player').username}][${interaction.options.getUser('player').id}]`);
             }
         } catch (error) {
             if (interaction.replied) {
