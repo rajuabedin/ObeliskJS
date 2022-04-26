@@ -52,7 +52,8 @@ module.exports = {
                     await interaction.client.databaseEditData("INSERT INTO users (user_id, username, class, gender, race, level, exp, gold) VALUES (?,?,?,?,?,?,?,?)",
                         [interaction.user.id, interaction.user.username, interaction.options.getString("class"), interaction.options.getString("gender"), interaction.options.getString("race"), 0, 0, 100]);
                     await interaction.client.databaseEditData(`insert into user_inventory (user_id, item_name, quantity) values (?, ?,?) ON DUPLICATE KEY update quantity = quantity + ?`, [interaction.user.id, "HP_Potion_lvl_1", 50, 50]);
-                    await interaction.client.databaseEditData("insert into bank (user_id) values (?)", [interaction.user.id])
+                    await interaction.client.databaseEditData("insert into bank (user_id) values (?)", [interaction.user.id]);
+                    await interaction.client.databaseEditData("insert into buff (user_id) values (?)", [interaction.user.id]);
                     await i.update({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CREATE_CREATED'), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESS'))], components: [] });
                 } else {
                     return await i.update({

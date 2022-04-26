@@ -327,8 +327,6 @@ module.exports = {
 
                         }
 
-                    } else {
-                        await interaction.client.databaseEditData("inster into buff (user_id) values (?)", [interaction.user.id]);
                     }
                     if (!continueCode) {
                         return
