@@ -107,6 +107,16 @@ class Client extends Discord.Client {
         return this.languages[language][word];
     }
 
+    whitePagesImageBottomEmbed(text, tittle = "", user, footer, imageUrl) {
+        const textToEmbed = new Discord.MessageEmbed()
+            .setColor('0xfafafa')
+            .setAuthor(tittle, user.avatarURL())
+            .setDescription(text)
+            .setImage(imageUrl)
+            .setFooter(footer)
+        return textToEmbed
+    }
+
     /**
      * 
      * @param {String} text 
