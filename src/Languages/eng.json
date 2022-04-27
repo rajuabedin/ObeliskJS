@@ -321,6 +321,7 @@
     "COMMAND_DEL_ACCOUNT_STOP": "Delete Account interrupted!",
     "COMMAND_DEL_ACCOUNT_WRONG_INPUT": "Invalid input, [Delete Account] interrupted!",
     "COMMAND_DEL_ACCOUNT_UNK": "You don't have an account what are you trying to delete??",
+    "COMMAND_DEL_ACCOUNT_SUC": "Account deleted successfully!",
     "COMMAND_STOP_FIGHTING": "You are currently in a fight.\nFinish the fight to get access to this command or wait 20 min.",
     "COMMAND_STOP_DUNGEON": "You are currently in a dungeon.\nExit the dungeon get access to this command.",
     "COMMAND_STOP_AFK": "You are currently in AFK mode.\nExit AFK mode to get access to this command.",
