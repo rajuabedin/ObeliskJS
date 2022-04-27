@@ -24,14 +24,6 @@ module.exports = {
             if (interaction.options.getString('confirmation') === 'yes') {
                 await interaction.reply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_DEL_ACCOUNT_SUC"))], ephemeral: true });
                 await interaction.client.databaseEditData('delete from users where user_id = ?', [interaction.user.id]);
-                await interaction.client.databaseEditData('delete from bank where user_id = ?', [interaction.user.id]);
-                await interaction.client.databaseEditData('delete from buff where user_id = ?', [interaction.user.id]);
-                await interaction.client.databaseEditData('delete from user_settings where user_id = ?', [interaction.user.id]);
-                await interaction.client.databaseEditData('delete from user_skins where user_id = ?', [interaction.user.id]);
-                await interaction.client.databaseEditData('delete from user_borders where user_id = ?', [interaction.user.id]);
-                await interaction.client.databaseEditData('delete from users_pet where user_id = ?', [interaction.user.id]);
-                await interaction.client.databaseEditData('delete from created_eqp where user_id = ?', [interaction.user.id]);
-                await interaction.client.databaseEditData('delete from user_cd where user_id = ?', [interaction.user.id]);
             } else {
                 await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'COMMAND_DEL_ACCOUNT_WRONG_INPUT'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
             }
