@@ -1031,6 +1031,58 @@ module.exports = {
                     await interaction.client.databaseEditData("update user_cd set hunt = ? where user_id = ?", [dateStr, interaction.user.id]);
                     await interaction.client.databaseEditData("update users set boss_fight = ? where user_id = ?", ["0", interaction.user.id]);
 
+                    // check task 
+                    let userTask = await interaction.client.databaseSelectData("select * from task where user_id = ?", [interaction.user.id]);
+                    userTask = userTask[0];
+                    let taskResetDone = false;
+                    const tomorrow = new Date(date);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    tomorrow.setHours(0, 0, 0, 0);
+
+                    var dateStr =
+                        ("00" + tomorrow.getDate()).slice(-2) + "/" +
+                        ("00" + (tomorrow.getMonth() + 1)).slice(-2) + "/" +
+                        tomorrow.getFullYear() + " " +
+                        ("00" + tomorrow.getHours()).slice(-2) + ":" +
+                        ("00" + tomorrow.getMinutes()).slice(-2) + ":" +
+                        ("00" + tomorrow.getSeconds()).slice(-2);
+
+                    let elapsedTimeFromHunt = 0;
+
+                    if (userTask.time !== "None") {
+                        elapsedTimeFromHunt = Math.floor((interaction.client.strToDate(userTask.time).getTime() - date.getTime()));
+                        // check remaining time 
+                        if (elapsedTimeFromHunt < 1) {
+                            // reset task
+                            taskResetDone = true;
+                            await interaction.client.databaseEditData("update task set daily = 0, vote_bot= 0, hunt = 1, gathering=0, status = 'open', time = ? where user_id = ?", [dateStr, interaction.user.id]);
+                            // log
+                            userDailyLogger(interaction, "New Task started!");
+                            userTask = {
+                                daily: 0,
+                                vote_bot: 0,
+                                hunt: 1,
+                                gathering: 0,
+                                status: "open",
+                                time: tomorrow
+                            }
+                        }
+                    }
+
+                    if (!taskResetDone && userTask.status !== "completed") {
+                        userTask.hunt += 1;
+
+                        // check if completed all tasks
+                        if (userTask.daily > 0 && userTask.vote_bot > 0 && userTask.hunt > 9 && userTask.gathering > 9) {
+                            await interaction.followUp({ embeds: [interaction.client.greenEmbed(`**${interaction.client.getWordLanguage(serverSettings.lang, 'TASKS_COMPLETED')}**`)] });
+                            await interaction.client.databaseEditData("update task set hunt = hunt + 1, status = 'completed' where user_id = ?", [interaction.user.id]);
+                            await interaction.client.databaseEditData(`insert into user_inventory (user_id, item_name, quantity) values (?, ?,?) ON DUPLICATE KEY update quantity = quantity + ?`, [interaction.user.id, "Aurora", 1, 1])
+
+                        } else {
+                            await interaction.client.databaseEditData("update task set hunt = hunt + 1 where user_id = ?", [interaction.user.id]);
+                        }
+                    }
+
                     // check if reminder Enabled
 
                     var userSettings = await interaction.client.databaseSelectData("select * from user_settings where user_id = ?", [interaction.user.id]);
@@ -1047,7 +1099,7 @@ module.exports = {
 
                     if (userSettings.h_reminder === "enabled" && !playerDied) {
                         await new Promise(r => setTimeout(r, commandCDTimeSec * 1000));
-                        await interaction.followUp({ content: `<@${interaction.user.id}>`, embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_READY'))] })
+                        await interaction.followUp({ content: `<@${interaction.user.id}>`, embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_READY'))], ephemeral: true })
                     }
                 }
             }
