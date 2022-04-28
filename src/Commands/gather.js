@@ -323,7 +323,7 @@ module.exports = {
                             taskResetDone = true;
                             await interaction.client.databaseEditData("update task set daily = 0, vote_bot= 0, hunt = 0, gathering = 1, status = 'open', time = ? where user_id = ?", [dateStr, interaction.user.id]);
                             // log
-                            userDailyLogger(interaction, "New Task started!");
+                            userDailyLogger(interaction, "task", "New Task started!");
                             userTask = {
                                 daily: 0,
                                 vote_bot: 0,
@@ -343,7 +343,7 @@ module.exports = {
                             await interaction.followUp({ embeds: [interaction.client.greenEmbed(`**${interaction.client.getWordLanguage(serverSettings.lang, 'TASKS_COMPLETED')}**`)] });
                             await interaction.client.databaseEditData("update task set gathering = gathering + 1, status = 'completed' where user_id = ?", [interaction.user.id]);
                             await interaction.client.databaseEditData(`insert into user_inventory (user_id, item_name, quantity) values (?, ?,?) ON DUPLICATE KEY update quantity = quantity + ?`, [interaction.user.id, "Aurora", 1, 1])
-
+                            userDailyLogger(interaction, "task", "Task completed!");
                         } else {
                             await interaction.client.databaseEditData("update task set gathering = gathering + 1 where user_id = ?", [interaction.user.id]);
                         }
