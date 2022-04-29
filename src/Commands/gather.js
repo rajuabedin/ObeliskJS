@@ -119,7 +119,7 @@ module.exports = {
                             if (i.values[0] !== text) {
                                 selected = true;
                                 await interaction.client.databaseEditData("update macro_detector set captcha_count = captcha_count + 1 where user_id = ?", [interaction.user.id]);
-                                await userDailyLogger(interaction, "captcha", `Selected wrong captcha on Gathering. Selected [${i.values[0]}] instead of [${text}]`);
+                                await userDailyLogger(interaction, interaction.user, "captcha", `Selected wrong captcha on Gathering. Selected [${i.values[0]}] instead of [${text}]`);
                                 await interaction.editReply({
                                     embeds: [interaction.client.redEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED"), interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED_TITLE"), i.user)], components: [], files: []
                                 });
@@ -274,7 +274,7 @@ module.exports = {
                         foundMaterialsString = "1" + interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_UNLUCKY');
                     }
 
-                    await userDailyLogger(interaction, "gathering", `Materials Found -> [${foundMaterialsString.substring(1)}]`);
+                    await userDailyLogger(interaction, interaction.user, "gathering", `Materials Found -> [${foundMaterialsString.substring(1)}]`);
 
                     for (var i = 0; i < foundMaterials.length; i++) {
                         await interaction.client.databaseEditData(`insert into user_inventory (user_id, item_name, quantity) values (?, ?,?) ON DUPLICATE KEY update quantity = quantity + ?`, [interaction.user.id, foundMaterials[i][0], foundMaterials[i][1], foundMaterials[i][1]])
@@ -323,7 +323,7 @@ module.exports = {
                             taskResetDone = true;
                             await interaction.client.databaseEditData("update task set daily = 0, vote_bot= 0, hunt = 0, gathering = 1, status = 'open', time = ? where user_id = ?", [dateStr, interaction.user.id]);
                             // log
-                            userDailyLogger(interaction, "task", "New Task started!");
+                            userDailyLogger(interaction, interaction.user, "task", "New Task started!");
                             userTask = {
                                 daily: 0,
                                 vote_bot: 0,
@@ -343,7 +343,7 @@ module.exports = {
                             await interaction.followUp({ embeds: [interaction.client.greenEmbed(`**${interaction.client.getWordLanguage(serverSettings.lang, 'TASKS_COMPLETED')}**`)] });
                             await interaction.client.databaseEditData("update task set gathering = gathering + 1, status = 'completed' where user_id = ?", [interaction.user.id]);
                             await interaction.client.databaseEditData(`insert into user_inventory (user_id, item_name, quantity) values (?, ?,?) ON DUPLICATE KEY update quantity = quantity + ?`, [interaction.user.id, "Aurora", 1, 1])
-                            userDailyLogger(interaction, "task", "Task completed!");
+                            userDailyLogger(interaction, interaction.user, "task", "Task completed!");
                         } else {
                             await interaction.client.databaseEditData("update task set gathering = gathering + 1 where user_id = ?", [interaction.user.id]);
                         }

@@ -103,7 +103,7 @@ module.exports = {
                 // confirm want to send
                 let continueCode = false;
                 await interaction.reply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SEND_GOLD_QUESTION').format(quantity, `<@!${interaction.options.getUser('player').id}>`), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
-                collectorFilter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
+                let collectorFilter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
                 collector = interaction.channel.createMessageComponentCollector({ collectorFilter, time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
@@ -175,7 +175,7 @@ module.exports = {
                         .then(data => { return data });
                     //console.log(dmMessage)
                 }
-                await userDailyLogger(interaction, "send", `Sent [${quantity}] gold to [${interaction.options.getUser('player').username}][${interaction.options.getUser('player').id}]`);
+                await userDailyLogger(interaction, interaction.user, "send", `Sent [${quantity}] gold to [${interaction.options.getUser('player').username}][${interaction.options.getUser('player').id}]`);
             } else {
                 // check if id was passed
                 if (interaction.options.getInteger('id') == null) {
@@ -276,7 +276,7 @@ module.exports = {
                         .then(data => { return data });
                     //console.log(dmMessage)
                 }
-                await userDailyLogger(interaction, "send", `Sent [${quantity}x ${userItemInfo.item_name}] to [${interaction.options.getUser('player').username}][${interaction.options.getUser('player').id}]`);
+                await userDailyLogger(interaction, interaction.user, "send", `Sent [${quantity}x ${userItemInfo.item_name}] to [${interaction.options.getUser('player').username}][${interaction.options.getUser('player').id}]`);
             }
         } catch (error) {
             if (interaction.replied) {

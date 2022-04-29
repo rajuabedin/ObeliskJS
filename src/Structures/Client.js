@@ -32,7 +32,8 @@ class Client extends Discord.Client {
             host: process.env.DB_HOST,
             user: process.env.DB_USER,
             password: process.env.DB_PASSWORD,
-            database: process.env.DB_DATABASE
+            database: process.env.DB_DATABASE,
+            connectionLimit: 20
         });
 
         this.defaultEmojis = { "credit": "<:coin2:784486506051010561>", "units": "<:Obelisk:784486454398943232>" }
@@ -312,6 +313,7 @@ class Client extends Discord.Client {
             });
             return rowsCount;
         });
+        console.log(query + " " + args + " " + result);
         var queryCompleted = false;
         if (result > 0) {
             queryCompleted = true;

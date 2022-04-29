@@ -195,7 +195,7 @@ module.exports = {
                             }
 
                         } else {
-                            await userDailyLogger(interaction, "familiar", "Familiar Unequipped low happiness")
+                            await userDailyLogger(interaction, interaction.user, "familiar", "Familiar Unequipped low happiness")
                             await interaction.client.databaseEditData("update users set pet_id = 'null' where user_id = ?", [interaction.user.id])
                             if (interactionReplied) {
                                 await interaction.editReply({

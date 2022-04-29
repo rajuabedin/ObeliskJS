@@ -121,7 +121,7 @@ module.exports = {
                         if (i.values[0] !== text) {
                             selected = true;
                             await interaction.client.databaseEditData("update macro_detector set captcha_count = captcha_count + 1 where user_id = ?", [interaction.user.id]);
-                            await userDailyLogger(interaction, "captcha", `Selected wrong captcha on Hunt. Selected [${i.values[0]}] instead of [${text}]`);
+                            await userDailyLogger(interaction, interaction.user, "captcha", `Selected wrong captcha on Hunt. Selected [${i.values[0]}] instead of [${text}]`);
                             await interaction.editReply({
                                 embeds: [interaction.client.redEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED"), interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED_TITLE"), i.user)], components: [], files: []
                             });
@@ -244,7 +244,7 @@ module.exports = {
             }
 
 
-            await userDailyLogger(interaction, "hunt", "Hunt Started")
+            await userDailyLogger(interaction, interaction.user, "hunt", "Hunt Started")
 
             //await interaction.reply({ embeds: [interaction.client.blueEmbed("Request recieved.")] })
 
@@ -437,7 +437,7 @@ module.exports = {
                                 }
 
                             } else {
-                                await userDailyLogger(interaction, "familiar", "Familiar Unequipped low happiness")
+                                await userDailyLogger(interaction, interaction.user, "familiar", "Familiar Unequipped low happiness")
                                 await interaction.client.databaseEditData("update users set pet_id = 'null' where user_id = ?", [interaction.user.id])
                                 if (interactionReplied) {
                                     await interaction.editReply({
@@ -812,7 +812,7 @@ module.exports = {
 
 
                         if (["", "None"].includes(userInfo.clan_tag)) {
-                            await userDailyLogger(interaction, "hunt", `Hunt completed. Rewards -> EXP -> [${monsterExp}] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}] DROP/S -> [${dropString.substring(1)}]`);
+                            await userDailyLogger(interaction, interaction.user, "hunt", `Hunt completed. Rewards -> EXP -> [${monsterExp}] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}] DROP/S -> [${dropString.substring(1)}]`);
                             huntEndEmbed = new MessageEmbed()
                                 .setColor('0x14e188')
                                 .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_COMPLETED'))
@@ -823,7 +823,7 @@ module.exports = {
                                 .addField(interaction.client.getWordLanguage(serverSettings.lang, 'FOUND_MATERIALS'), `\`\`\`css\n${dropString.substring(1)}\`\`\``, false)
                                 .setFooter(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_POTIONS').format(potionUsed));
                         } else {
-                            await userDailyLogger(interaction, "hunt", `Hunt completed. Rewards -> EXP -> [${Math.ceil(monsterExp * 0.9)}] [${Math.ceil(monsterExp * 0.1)} for CLAN] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}] DROP/S -> [${dropString.substring(1)}]`);
+                            await userDailyLogger(interaction, interaction.user, "hunt", `Hunt completed. Rewards -> EXP -> [${Math.ceil(monsterExp * 0.9)}] [${Math.ceil(monsterExp * 0.1)} for CLAN] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}] DROP/S -> [${dropString.substring(1)}]`);
                             huntEndEmbed = new MessageEmbed()
                                 .setColor('0x14e188')
                                 .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_COMPLETED'))
@@ -924,7 +924,7 @@ module.exports = {
                                         }
 
                                         huntLog.push(`Quest completed. Rewards GOLD -> [${questData.gold}] EXP -> [${questData.exp}]`)
-                                        await userDailyLogger(interaction, "quest", `Quest completed. Rewards GOLD -> [${questData.gold}] EXP -> [${questData.exp}]`);
+                                        await userDailyLogger(interaction, interaction.user, "quest", `Quest completed. Rewards GOLD -> [${questData.gold}] EXP -> [${questData.exp}]`);
                                         monsterExp += questData.exp;
                                         monsterGold += questData.gold;
                                         await interaction.followUp({ embeds: [interaction.client.greenEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_COMPLETED_REWARD').format(questData.gold, questData.exp), interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_COMPLETED'), interaction.user)] });
@@ -953,7 +953,7 @@ module.exports = {
                                 userInfo.level += levelDiff;
                                 monsterFoundDropsName.push("Aurora");
                                 monsterFoundDropsQuantity.push(levelDiff)
-                                await userDailyLogger(interaction, "hunt", `User level updated from [${userInfo.level}] to [${userInfo.level + levelDiff}]`);
+                                await userDailyLogger(interaction, interaction.user, "hunt", `User level updated from [${userInfo.level}] to [${userInfo.level + levelDiff}]`);
                                 await interaction.followUp({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'PLAYER_LEVEL_UP').format(interaction.user.username, userInfo.level + levelDiff, levelDiff))] })
                             } else {
                                 monsterExp = currentExp;
@@ -980,7 +980,7 @@ module.exports = {
                             .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_DIED').format(interaction.user.username, `${selectedMonster.name} LvL${monsterLvl}`))
                             .setThumbnail(`https://obelisk.club/monsters/${selectedMonster.img_link}.png`)
                             .addField(interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST'), `\`\`\`css\nEXP -> [${userInfo.exp}] GOLD -> [${goldLost}]\`\`\``, false)
-                        await userDailyLogger(interaction, "hunt", `Player Died. Penalties EXP -> [${userInfo.exp}] GOLD -> [${goldLost}]`)
+                        await userDailyLogger(interaction, interaction.user, "hunt", `Player Died. Penalties EXP -> [${userInfo.exp}] GOLD -> [${goldLost}]`)
                         await interaction.client.databaseEditData("update users set gold = gold - ?, exp = exp - ? where user_id = ?", [userInfo.exp, goldLost, interaction.user.id])
                     } else if (playerDied && deathHuntCount != 0) {
                         showLog = true;
@@ -994,10 +994,10 @@ module.exports = {
                             .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_DIED').format(interaction.user.username, `${selectedMonster.name} LvL${monsterLvl}`))
                             .setThumbnail(`https://obelisk.club/monsters/${selectedMonster.img_link}.png`)
                             .addField(interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST'), `\`\`\`css\n${interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST_NONE')}\`\`\``, false)
-                        await userDailyLogger(interaction, "hunt", `Player Died. Protection found, no penalties applied.`)
+                        await userDailyLogger(interaction, interaction.user, "hunt", `Player Died. Protection found, no penalties applied.`)
                     } else if (monsterRunAway && playerHP > 1) {
                         huntEndEmbed = interaction.client.redEmbed(`**${interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_MONSTER_RUN_T')}**\n${interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_MONSTER_RUN')}`)
-                        await userDailyLogger(interaction, "hunt", `Monster run away.`)
+                        await userDailyLogger(interaction, interaction.user, "hunt", `Monster run away.`)
                         showLog = true;
                     }
 
@@ -1057,7 +1057,7 @@ module.exports = {
                             taskResetDone = true;
                             await interaction.client.databaseEditData("update task set daily = 0, vote_bot= 0, hunt = 1, gathering=0, status = 'open', time = ? where user_id = ?", [dateStr, interaction.user.id]);
                             // log
-                            userDailyLogger(interaction, "task", "New Task started!");
+                            userDailyLogger(interaction, interaction.user, "task", "New Task started!");
                             userTask = {
                                 daily: 0,
                                 vote_bot: 0,
@@ -1077,7 +1077,7 @@ module.exports = {
                             await interaction.followUp({ embeds: [interaction.client.greenEmbed(`**${interaction.client.getWordLanguage(serverSettings.lang, 'TASKS_COMPLETED')}**`)] });
                             await interaction.client.databaseEditData("update task set hunt = hunt + 1, status = 'completed' where user_id = ?", [interaction.user.id]);
                             await interaction.client.databaseEditData(`insert into user_inventory (user_id, item_name, quantity) values (?, ?,?) ON DUPLICATE KEY update quantity = quantity + ?`, [interaction.user.id, "Aurora", 1, 1])
-                            userDailyLogger(interaction, "task", "Task completed!");
+                            userDailyLogger(interaction, interaction.user, "task", "Task completed!");
                         } else {
                             await interaction.client.databaseEditData("update task set hunt = hunt + 1 where user_id = ?", [interaction.user.id]);
                         }

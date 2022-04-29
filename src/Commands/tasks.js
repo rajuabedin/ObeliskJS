@@ -88,7 +88,7 @@ module.exports = {
                     await interaction.client.databaseEditData("update task set daily = 0, vote_bot= 0, hunt = 0, gathering=0, status = 'open', time = ? where user_id = ?", [dateStr, interaction.user.id]);
                     elapsedTimeFromTaskStarted = Math.floor((tomorrow.getTime() - date.getTime()));
                     // log
-                    userDailyLogger(interaction, "task", "New Task started!");
+                    userDailyLogger(interaction, interaction.user, "task", "New Task started!");
                     userTask = {
                         daily: 0,
                         vote_bot: 0,

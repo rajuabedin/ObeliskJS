@@ -156,7 +156,7 @@ module.exports = {
                         ("00" + tempDate.getMinutes()).slice(-2) + ":" +
                         ("00" + tempDate.getSeconds()).slice(-2);
                     await interaction.client.databaseEditData("update user_cd set quest = ? where user_id = ?", [dateStr, interaction.user.id])
-                    await userDailyLogger(interaction, "quest", `New quest Created at [${tempDate}]`)
+                    await userDailyLogger(interaction, interaction.user, "quest", `New quest Created at [${tempDate}]`)
                     var data = await fetch(`https://obelisk.club/create_quest.php?id=${interaction.user.id}&time=${dateStr}`, {
                         method: 'POST'
                     })

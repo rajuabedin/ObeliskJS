@@ -45,7 +45,7 @@ module.exports = {
 
             // get confirmation they read skills
             await interaction.reply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CREATE_CREATING').format(interaction.options.getString("class")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
-            collectorFilter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
+            let collectorFilter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
             collector = interaction.channel.createMessageComponentCollector({ collectorFilter, time: 15000 });
             collector.on('collect', async i => {
                 if (i.customId === "yes") {
