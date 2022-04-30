@@ -313,7 +313,6 @@ class Client extends Discord.Client {
             });
             return rowsCount;
         });
-        console.log(query + " " + args + " " + result);
         var queryCompleted = false;
         if (result > 0) {
             queryCompleted = true;

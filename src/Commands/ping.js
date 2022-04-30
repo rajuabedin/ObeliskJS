@@ -3,6 +3,8 @@ const errorLog = require('../Utility/logger').logger;
 const { MessageActionRow, MessageButton, MessageSelectMenu, MessageEmbed, MessageAttachment } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const userDailyLogger = require('../Utility/userDailyLogger');
+const fetch = require("node-fetch");
+require('dotenv').config();
 
 module.exports = {
     data: new SlashCommandBuilder()

@@ -1,6 +1,8 @@
 const Command = require('../Structures/Command.js');
 const errorLog = require('../Utility/logger').logger;
 const { SlashCommandBuilder } = require('@discordjs/builders');
+const fetch = require("node-fetch");
+require('dotenv').config();
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -105,6 +107,8 @@ module.exports = {
 
             if (donatorData[0] !== undefined) {
                 userIsDonator = true;
+            } else {
+                userIsDonator = getUserInfoDonator(interaction.user.id);
             }
 
             var userIsBooster = false;
@@ -115,7 +119,11 @@ module.exports = {
 
             if (boosterData[0] !== undefined) {
                 userIsBooster = true;
+            } else {
+                userIsBooster = await getUserInfoBooster(interaction.user.id);
             }
+
+
 
             if (userIsBooster) {
                 rewards += "\nServer Booster -> 1x Aurora";
@@ -158,5 +166,56 @@ module.exports = {
             }
             errorLog.error(error.message, { 'command_name': interaction.commandName });
         }
+    }
+}
+
+
+async function getUserInfoBooster(userId) {
+    requestBody = {
+        user_id: userId
+    }
+
+    var data = await fetch(`http://localhost:5000/DMAPI/get_user`, {
+        method: 'POST',
+        headers: {
+            'x-api-key': process.env.API_KEY,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+        .then(response => response.json())
+        .then(data => { return data });
+    if (data.success === true && data.Data[0].roles.includes("760193294054588457")) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+async function getUserInfoDonator(userId) {
+    requestBody = {
+        user_id: userId
+    }
+
+    var data = await fetch(`http://localhost:5000/DMAPI/get_user`, {
+        method: 'POST',
+        headers: {
+            'x-api-key': process.env.API_KEY,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+        .then(response => response.json())
+        .then(data => { return data });
+    if (data.success === true && data.Data[0].roles.includes("800399000141430796")) {
+        return true;
+    } else if (data.success === true && data.Data[0].roles.includes("772832085231665194")) {
+        return true;
+    } else if (data.success === true && data.Data[0].roles.includes("772832009851895810")) {
+        return true;
+    } else if (data.success === true && data.Data[0].roles.includes("760205852585099275")) {
+        return true;
+    } else {
+        return false;
     }
 }
