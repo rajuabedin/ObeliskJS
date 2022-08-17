@@ -13,8 +13,12 @@ module.exports = new Event("interactionCreate", async (client, interaction) => {
         if (!interaction.isCommand()) return;
 
         let banInfo = await interaction.client.databaseSelectData("select * from ban_list where user_id = ?", [interaction.user.id])
-        let serverSettings = await interaction.client.databaseSelectData("select * from server_settings where server_id = ?", [interaction.guildId.toString()]);
-
+        let serverSettings
+        if (interaction.guildId) {
+            serverSettings = await interaction.client.databaseSelectData("select * from server_settings where server_id = ?", [interaction.guildId.toString()]);
+        } else {
+            serverSettings = await interaction.client.databaseSelectData("select * from server_settings where server_id = ?", [client.guildId]);
+        }
         if (banInfo[0] !== undefined) {
             return await interaction.reply({ embeds: [interaction.client.redEmbed(client.getWordLanguage(serverSettings[0].lang, "COMMAND_STOP_BAN").format(banInfo[0].reason), client.getWordLanguage(serverSettings[0].lang, "CM_LOCKED"))] })
         }
