@@ -75,7 +75,7 @@ module.exports = {
             } else {
                 amount = nFormatterStringToNumber(amount);
                 if (amount == "error" || amount < 1) {
-                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_TRADE_AMMOUNT'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_TRADE_AMOUNT'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                 }
             }
 
