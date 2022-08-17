@@ -16,6 +16,7 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             let hpPotions = 0;
             let mpPotions = 0;
@@ -29,14 +30,10 @@ module.exports = {
             }
 
             var embed = interaction.client.bluePagesImageEmbed(interaction.client.getWordLanguage(serverSettings.lang, "INVENTORY_POTIONS").format(hpPotions, mpPotions), interaction.client.getWordLanguage(serverSettings.lang, 'INVENTORY_POTIONS_TITLE').format(interaction.user.username), interaction.user, "", "https://obelisk.club/npc/potions.gif");
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }

@@ -61,6 +61,7 @@ module.exports = {
                 return 0;
             }
         }
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             let userTask = await interaction.client.databaseSelectData("select * from task where user_id = ?", [interaction.user.id]);
             userTask = userTask[0];
@@ -148,18 +149,14 @@ module.exports = {
                     .setThumbnail(interaction.user.avatarURL())
                     .setDescription(description)
                     .setImage("https://obelisk.club/npc/task-open.png")
-                    .setFooter(interaction.client.getWordLanguage(serverSettings.lang, "DAILY_TASK_INFO"), interaction.client.user.avatarURL());
+                    .setFooter({ text: interaction.client.getWordLanguage(serverSettings.lang, "DAILY_TASK_INFO"), iconURL: interaction.client.user.avatarURL() });
             }
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }

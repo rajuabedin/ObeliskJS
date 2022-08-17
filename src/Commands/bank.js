@@ -7,16 +7,23 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('bank')
         .setDescription('This command lets you access your bank')
-        .addStringOption(option =>
-            option.setName("transaction")
-                .setDescription("Transaction options")
-                .addChoice("deposit", "deposit")
-                .addChoice("withdraw", "withdraw")
-                .setRequired(false))
-        .addStringOption(option =>
-            option.setName("value")
-                .setDescription("Gold value")
-                .setRequired(false)),
+        .addSubcommand(subcommand => subcommand
+            .setName('balance')
+            .setDescription('This command lets you check your balance'))
+        .addSubcommand(subcommand => subcommand
+            .setName('deposit')
+            .setDescription('This command lets you deposit money into your bank')
+            .addStringOption(option =>
+                option.setName("value")
+                    .setDescription("Gold value")
+                    .setRequired(true)))
+        .addSubcommand(subcommand => subcommand
+            .setName('withdraw')
+            .setDescription('This command lets you withdraw money from your bank')
+            .addStringOption(option =>
+                option.setName("value")
+                    .setDescription("Gold value")
+                    .setRequired(true))),
 
 
     async execute(interaction, userInfo, serverSettings) {
@@ -66,8 +73,9 @@ module.exports = {
             else
                 return "error"
         }
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
-            var transactionOption = interaction.options.getString('transaction');
+            var transactionOption = interaction.options.getSubcommand();
             var value = interaction.options.getString('value');
 
             var userBankData = await interaction.client.databaseSelectData("select * from bank where user_id = ?", [interaction.user.id]);
@@ -87,25 +95,27 @@ module.exports = {
                 await interaction.client.databaseEditData("insert into back (user_id) values (?)", [interaction.user.id])
             }
 
-            if (transactionOption === null) {
+            if (transactionOption === 'balance') {
                 var transactionHistory = userBankData.history.replaceAll(';', '\n');
 
                 const bankEmbed = new MessageEmbed()
                     .setColor('0x14e188')
-                    .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_ACC').format(interaction.user.username), interaction.user.avatarURL())
+                    .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_ACC').format(interaction.user.username), iconURL: interaction.user.avatarURL() })
                     .setThumbnail(`https://obelisk.club/npc/BANK_LOGO.png`)
-                    .addField(interaction.client.getWordLanguage(serverSettings.lang, 'GOLD'), `${userBankData.value}/${userInfo.level * 1000}`)
-                    .addField(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_LAST_TRANSACTION'), "```css\n" + transactionHistory + "```");
-                await interaction.reply({ embeds: [bankEmbed], components: [] });
+                    .addFields(
+                        { name: interaction.client.getWordLanguage(serverSettings.lang, 'GOLD'), value: `${userBankData.value}/${userInfo.level * 1000}` },
+                        { name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_LAST_TRANSACTION'), value: "```css\n" + transactionHistory + "```" }
+                    )
+                await interaction.editReply({ embeds: [bankEmbed], components: [] });
             } else if (transactionOption == "deposit") {
                 if (value === null) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_VALUE_MISSING'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_VALUE_MISSING'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                 } else if (value == "all") {
                     value = maxBankValue - userBankData.value;
                 } else {
                     value = nFormatterStringToNumber(value);
                     if (value == "error" || value < 0) {
-                        return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_VALUE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                        return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_VALUE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                     }
                 }
 
@@ -113,10 +123,12 @@ module.exports = {
                     if (value > (maxBankValue - userBankData.value) || value < 1) {
                         const bankEmbed = new MessageEmbed()
                             .setColor('0xed4245')
-                            .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT'))
+                            .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT') })
                             .setThumbnail(`https://obelisk.club/npc/BANK_LOGO.png`)
-                            .addField(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_BANK_MAX_GOLD').format(value));
-                        return await interaction.reply({ embeds: [bankEmbed] });
+                            .addFields(
+                                { name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), value: interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_BANK_MAX_GOLD').format(value) }
+                            )
+                        return await interaction.editReply({ embeds: [bankEmbed] });
                     }
 
                     var tempDate = new Date();
@@ -134,35 +146,41 @@ module.exports = {
                     await interaction.client.databaseEditData("update bank set value = value + ?, history = ? where user_id = ?", [value, transactionHistory.join(";"), interaction.user.id]);
                     const bankEmbed = new MessageEmbed()
                         .setColor('0x14e188')
-                        .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT'))
+                        .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT') })
                         .setThumbnail(`https://obelisk.club/npc/BANK_LOGO.png`)
-                        .addField(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT_COMPLETED').format(value));
-                    return await interaction.reply({ embeds: [bankEmbed] });
+                        .addFields(
+                            { name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), value: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT_COMPLETED').format(value) }
+                        )
+                    return await interaction.editReply({ embeds: [bankEmbed] });
                 } else {
                     const bankEmbed = new MessageEmbed()
                         .setColor('0xed4245')
-                        .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT'))
+                        .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT') })
                         .setThumbnail(`https://obelisk.club/npc/BANK_LOGO.png`)
-                        .addField(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_GOLD').format(value));
-                    return await interaction.reply({ embeds: [bankEmbed] });
+                        .addFields(
+                            { name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), value: interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_GOLD').format(value) }
+                        )
+                    return await interaction.editReply({ embeds: [bankEmbed] });
                 }
             } else if (transactionOption == "withdraw") {
                 if (userBankData.value < 1) {
                     const bankEmbed = new MessageEmbed()
                         .setColor('0xed4245')
-                        .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT'))
+                        .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT') })
                         .setThumbnail(`https://obelisk.club/npc/BANK_LOGO.png`)
-                        .addField(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_BANK_EMPTY_GOLD').format(value));
-                    return await interaction.reply({ embeds: [bankEmbed] });
+                        .addFields(
+                            { name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), value: interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_BANK_EMPTY_GOLD').format(value) }
+                        )
+                    return await interaction.editReply({ embeds: [bankEmbed] });
                 }
                 if (value === null) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_VALUE_MISSING'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_VALUE_MISSING'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                 } else if (value == "all") {
                     value = userBankData.value;
                 } else {
                     value = nFormatterStringToNumber(value);
                     if (value == "error" || value < 1) {
-                        return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_VALUE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                        return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_VALUE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                     }
                 }
                 if (value <= userBankData.value) {
@@ -181,80 +199,26 @@ module.exports = {
                     await interaction.client.databaseEditData("update bank set value = value - ?, history = ? where user_id = ?", [value, transactionHistory.join(";"), interaction.user.id]);
                     const bankEmbed = new MessageEmbed()
                         .setColor('0x14e188')
-                        .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT'))
+                        .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_DEPOSIT') })
                         .setThumbnail(`https://obelisk.club/npc/BANK_LOGO.png`)
-                        .addField(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), interaction.client.getWordLanguage(serverSettings.lang, 'BANK_WITHDRAW_COMPLETED').format(value));
-                    return await interaction.reply({ embeds: [bankEmbed] });
+                        .addFields(
+                            { name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), value: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_WITHDRAW_COMPLETED').format(value) }
+                        )
+                    return await interaction.editReply({ embeds: [bankEmbed] });
                 } else {
                     const bankEmbed = new MessageEmbed()
                         .setColor('0xed4245')
-                        .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_WITHDRAW'))
+                        .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_WITHDRAW') })
                         .setThumbnail(`https://obelisk.club/npc/BANK_LOGO.png`)
-                        .addField(interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_GOLD_BANK').format(value));
-                    return await interaction.reply({ embeds: [bankEmbed] });
+                        .addFields(
+                            { name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_RESPONSE'), value: interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_GOLD_BANK').format(value) }
+                        )
+                    return await interaction.editReply({ embeds: [bankEmbed] });
                 }
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
-
-function buttonHandler(interaction, serverSettings, userInfo, userBankData) {
-
-    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
-
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
-
-    collector.on('collect', async i => {
-        collector.resetTimer({ time: 15000 });
-    });
-
-    collector.on('end', collected => {
-        interaction.editReply({ components: [] })
-    });
-
-}
-
-const rowDeposityWithdraw = new MessageActionRow()
-    .addComponents(
-        new MessageButton()
-            .setCustomId('deposit')
-            .setLabel('DEPOSIT')
-            .setStyle('PRIMARY'),
-        new MessageButton()
-            .setCustomId('withdraw')
-            .setLabel('WITHDRAW')
-            .setStyle('PRIMARY'),
-    );
-
-const rowDeposityWithdrawDisabled = new MessageActionRow()
-    .addComponents(
-        new MessageButton()
-            .setCustomId('deposit')
-            .setLabel('DEPOSIT')
-            .setStyle('PRIMARY'),
-        new MessageButton()
-            .setCustomId('withdraw')
-            .setLabel('WITHDRAW')
-            .setStyle('PRIMARY')
-            .setDisabled(true),
-    );
-
-const rowDeposityDisabledWithdraw = new MessageActionRow()
-    .addComponents(
-        new MessageButton()
-            .setCustomId('deposit')
-            .setLabel('DEPOSIT')
-            .setStyle('PRIMARY')
-            .setDisabled(true),
-        new MessageButton()
-            .setCustomId('withdraw')
-            .setLabel('WITHDRAW')
-            .setStyle('PRIMARY'),
-    );

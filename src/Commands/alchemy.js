@@ -24,6 +24,7 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             let searchName = interaction.options.getString('search');
             let orderBy = interaction.options.getString('order');
@@ -42,9 +43,9 @@ module.exports = {
             }
 
             if (alchemyData[0] === undefined && searchName === null) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ALCHEMY_MISSING'))] });
+                return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ALCHEMY_MISSING'))] });
             } else if (alchemyData[0] === undefined && searchName !== null) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ALCHEMY_MISSING_SEARCH').format(interaction.options.getString('search')))] });
+                return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ALCHEMY_MISSING_SEARCH').format(interaction.options.getString('search')))] });
             } else {
                 var itemsPerPage = 2;
                 var newAlchemyData = [];
@@ -68,34 +69,33 @@ module.exports = {
 
                 var embed = interaction.client.bluePagesImageEmbed(alchemyData[0], interaction.client.getWordLanguage(serverSettings.lang, 'ALCHEMY_RECIPES'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages), "https://obelisk.club/npc/alchemy.gif");
                 if (maxPages > 1) {
-                    await interaction.reply({ embeds: [embed], components: [row] });
-                    buttonHandler(userInfo, interaction, serverSettings, alchemyData);
+                    await interaction.editReply({ embeds: [embed], components: [row] });
+                    buttonHandler(userInfo, interaction, serverSettings, alchemyData, msg);
                 } else {
-                    await interaction.reply({ embeds: [embed] });
+                    await interaction.editReply({ embeds: [embed] });
                 }
             }
 
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
 
 
-function buttonHandler(userInfo, interaction, serverSettings, alchemyData) {
+function buttonHandler(userInfo, interaction, serverSettings, alchemyData, msg) {
     let index = 0;
     var maxPages = alchemyData.length - 1;
 
-    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
 
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
+        i.deferUpdate();
+        if (i.user.id != interaction.user.id) {
+            return;
+        }
         collector.resetTimer({ time: 15000 });
         if (i.customId === 'left')
             index--;
@@ -106,7 +106,7 @@ function buttonHandler(userInfo, interaction, serverSettings, alchemyData) {
         if (index < 0)
             index = maxPages;
         var embed = interaction.client.bluePagesImageEmbed(alchemyData[index], interaction.client.getWordLanguage(serverSettings.lang, 'ALCHEMY_RECIPES'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1), "https://obelisk.club/npc/alchemy.gif");
-        await i.update({ embeds: [embed], components: [row] });
+        await interaction.editReply({ embeds: [embed], components: [row] });
     });
 
     collector.on('end', collected => {

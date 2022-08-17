@@ -34,6 +34,7 @@ module.exports = {
                 return "Ready";
             }
         }
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             var userCDData = await interaction.client.databaseSelectData("select * from user_cd where user_id = ?", [interaction.user.id]);
             if (userCDData[0] === undefined) {
@@ -181,16 +182,12 @@ module.exports = {
 
                 }
 
-                await interaction.reply({ embeds: [interaction.client.greenEmbedImage(cdString, interaction.client.getWordLanguage(serverSettings.lang, 'COMMAND_CD_TITLE'), interaction.user)] })
+                await interaction.editReply({ embeds: [interaction.client.greenEmbedImage(cdString, interaction.client.getWordLanguage(serverSettings.lang, 'COMMAND_CD_TITLE'), interaction.user)] })
 
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }

@@ -24,19 +24,44 @@ module.exports = {
         }
 
 
-
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
 
-            async function generateMacroDetector(captchaData, interaction, serverSettings) {
+            async function generateMacroDetector(captchaData, interaction, serverSettings, msg) {
                 if (captchaData === undefined) {
                     return [false, true];
                 } else {
                     // check if hunt need captcha
                     if (captchaData.captcha_count > 0 && captchaData.gathering < 30) {
-                        await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "GATHERING_CAPTCHA").format("Hunt"), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
+                        await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "GATHERING_CAPTCHA").format("Hunt"), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
                         return [true, false];
                     } else if (captchaData.gathering > 30) {
                         // START MACRO DETECTOR
+                        await interaction.client.databaseEditData("update macro_detector set captcha_count = captcha_count + 1 where user_id = ?", [interaction.user.id]);
+                        if (captchaData.captcha_count + 1 > 4) {
+                            const webhookClient = new WebhookClient({ id: process.env.webhookId, token: process.env.webhookToken });
+
+                            const embed = new MessageEmbed()
+                                .setAuthor({ name: interaction.client.user.username + " banned " + interaction.user.username, iconURL: interaction.client.user.avatarURL() })
+                                .addFields(
+                                    { name: "User ID:", value: `\`${interaction.user.id}\`` },
+                                    { name: "Reason:", value: `\`Selected wrong captcha text\`` }
+                                )
+                                .setFooter({ text: "Ban Time" })
+                                .setTimestamp()
+                                .setColor('#0xed4245')
+                                .setThumbnail(interaction.user.avatarURL());
+
+                            webhookClient.send({
+                                content: `<@!${interaction.user.id}>`,
+                                username: 'Obelisk Logger',
+                                embeds: [embed],
+                            });
+                            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_STOP_BAN").format(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED")), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
+                            await interaction.client.databaseEditData("insert into ban_list (user_id, ban_by, reason) values (?, ?, ?)", [interaction.user.id, `735090182893862954`, "Captcha validation failed. You have selected the wrong captcha text."])
+
+                            return [true, false];
+                        }
                         const width = 500
                         const height = 80
                         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -99,26 +124,28 @@ module.exports = {
 
                         var textToEmbed = new MessageEmbed()
                             .setColor('0x009dff')
-                            .setAuthor("Macro Detector", interaction.user.avatarURL())
+                            .setAuthor({ name: "Macro Detector", iconURL: interaction.user.avatarURL() })
                             .setImage('attachment://Never_gonna_give_you_up_Never_gonna_let_you_down_Never_gonna_run_around_and_desert_you_Never_gonna_make_you_cry_Never_gonna_say_goodbye_Never_gonna_tell_a_lie_and_hurt_you.png')
                             .setDescription(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_MSG"))
 
 
-                        interaction.reply({ embeds: [textToEmbed], components: [row], files: [attachment] });
+                        interaction.editReply({ embeds: [textToEmbed], components: [row], files: [attachment] });
 
-                        const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
                         let selected = false;
 
-                        const collector = await interaction.channel.createMessageComponentCollector({ filter, time: 25000 });
+                        const collector = msg.createMessageComponentCollector({ time: 25000 });
 
                         let collectorRunning = true;
                         var array = [];
 
                         collector.on('collect', async i => {
+                            i.deferUpdate();
+                            if (i.user.id !== interaction.user.id) return;
+
                             selected = true;
                             if (i.values[0] !== text) {
                                 selected = true;
-                                await interaction.client.databaseEditData("update macro_detector set captcha_count = captcha_count + 1 where user_id = ?", [interaction.user.id]);
+
                                 await userDailyLogger(interaction, interaction.user, "captcha", `Selected wrong captcha on Gathering. Selected [${i.values[0]}] instead of [${text}]`);
                                 await interaction.editReply({
                                     embeds: [interaction.client.redEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED"), interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED_TITLE"), i.user)], components: [], files: []
@@ -128,10 +155,12 @@ module.exports = {
                                     const webhookClient = new WebhookClient({ id: process.env.webhookId, token: process.env.webhookToken });
 
                                     const embed = new MessageEmbed()
-                                        .setAuthor(`${interaction.client.user.username} banned ${interaction.user.username}`, interaction.client.user.avatarURL())
-                                        .addField("User ID:", `\`${interaction.user.id}\``)
-                                        .addField("Reason:", `\`Selected wrong captcha text\``)
-                                        .setFooter("Ban Time")
+                                        .setAuthor({ name: interaction.client.user.username + " banned " + interaction.user.username, iconURL: interaction.client.user.avatarURL() })
+                                        .addFields(
+                                            { name: "User ID:", value: `\`${interaction.user.id}\`` },
+                                            { name: "Reason:", value: `\`Selected wrong captcha text\`` }
+                                        )
+                                        .setFooter({ text: "Ban Time" })
                                         .setTimestamp()
                                         .setColor('#0xed4245')
                                         .setThumbnail(interaction.user.avatarURL());
@@ -159,8 +188,8 @@ module.exports = {
                             collectorRunning = false;
                             if (!selected) {
                                 selectedRightCapthca = false;
-                                await interaction.client.databaseEditData("update macro_detector set captcha_count = captcha_count + 1 where user_id = ?", [interaction.user.id]);
-                                await interaction.editReply({ embeds: [interaction.client.redEmbed("**Interaction time out**")], components: [], files: [] });
+                                await userDailyLogger(interaction, interaction.user, "captcha", `Failed. Timeout!`);
+                                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_I_TIMEOUT'))], components: [], files: [] });
                                 array = [true, false];
                             }
                         });
@@ -184,7 +213,7 @@ module.exports = {
                 // check last hunt lock time 
                 let elapsedTimeFromHuntLock = Math.floor((date.getTime() - interaction.client.strToDate(userInfo.boss_fight).getTime()));
                 if (elapsedTimeFromHuntLock < 1140000) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_STOP_FIGHTING"), interaction.client.getWordLanguage(serverSettings.lang, "LOCKED"))] });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_STOP_FIGHTING"), interaction.client.getWordLanguage(serverSettings.lang, "LOCKED"))] });
                 }
             }
 
@@ -228,7 +257,7 @@ module.exports = {
                     let elapsedTimeFromHunt = Math.floor((interaction.client.strToDate(userCD[0].gathering).getTime() - date.getTime()) / 1000);
                     // check remaining time 
                     if (elapsedTimeFromHunt > 0) {
-                        return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_P").format(" `" + (elapsedTimeFromHunt) + "`s", "https://www.patreon.com/obelisk_rpg1"), interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_T").format("Gathering"))], ephemeral: true });;
+                        return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_P").format(" `" + (elapsedTimeFromHunt) + "`s", "https://www.patreon.com/obelisk_rpg1"), interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_T").format("Gathering"))], ephemeral: true });;
                     }
                 }
             }
@@ -238,7 +267,7 @@ module.exports = {
             var captchaData = await interaction.client.databaseSelectData("select * from macro_detector where user_id = ?", [interaction.user.id]);
             captchaData = captchaData[0]
 
-            var captchaReturn = await generateMacroDetector(captchaData, interaction, serverSettings);
+            var captchaReturn = await generateMacroDetector(captchaData, interaction, serverSettings, msg);
             if (captchaReturn !== undefined) {
                 interactionReplied = captchaReturn[0];
                 selectedRightCapthca = captchaReturn[1];
@@ -282,7 +311,7 @@ module.exports = {
                     if (interaction.replied) {
                         await interaction.editReply({ embeds: [interaction.client.greenEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, "FOUND_MATERIALS") + "\n```css\n" + foundMaterialsString.substring(1) + "```", interaction.client.getWordLanguage(serverSettings.lang, "GATHERING_COMPLETED"), interaction.user)] })
                     } else {
-                        await interaction.reply({ embeds: [interaction.client.greenEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, "FOUND_MATERIALS") + "\n```css\n" + foundMaterialsString.substring(1) + "```", interaction.client.getWordLanguage(serverSettings.lang, "GATHERING_COMPLETED"), interaction.user)] })
+                        await interaction.editReply({ embeds: [interaction.client.greenEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, "FOUND_MATERIALS") + "\n```css\n" + foundMaterialsString.substring(1) + "```", interaction.client.getWordLanguage(serverSettings.lang, "GATHERING_COMPLETED"), interaction.user)] })
                     }
 
                     var tempDate = new Date();
@@ -365,19 +394,15 @@ module.exports = {
 
                     if (userSettings.g_reminder === "enabled") {
                         await new Promise(r => setTimeout(r, commandCDTimeSec * 1000));
-                        await interaction.followUp({ content: `<@${interaction.user.id}>`, embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_READY'))], ephemeral: true })
+                        await interaction.followUp({ content: `<@${interaction.user.id}>`, embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'GATHERING_READY'))], ephemeral: true })
                     }
                 }
             }
 
 
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }

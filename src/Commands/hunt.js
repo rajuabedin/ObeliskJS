@@ -29,16 +29,41 @@ module.exports = {
             return Math.floor(Math.random() * (max - min + 1) + min);
         }
 
-        async function generateMacroDetector(captchaData, interaction, serverSettings) {
+        async function generateMacroDetector(captchaData, interaction, serverSettings, msg) {
             if (captchaData === undefined) {
                 return [false, true];
             } else {
                 // check if gathering need captcha
                 if (captchaData.captcha_count > 0 && captchaData.hunt < 30) {
-                    await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "HUNT_CAPTCHA").format("Gathering"), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
+                    await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "HUNT_CAPTCHA").format("Gathering"), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
                     return [true, false];
                 } else if (captchaData.hunt > 30) {
                     // START MACRO DETECTOR
+                    await interaction.client.databaseEditData("update macro_detector set captcha_count = captcha_count + 1 where user_id = ?", [interaction.user.id]);
+                    if (captchaData.captcha_count + 1 > 4) {
+                        const webhookClient = new WebhookClient({ id: process.env.webhookId, token: process.env.webhookToken });
+
+                        const embed = new MessageEmbed()
+                            .setAuthor({ name: interaction.client.user.username + " banned " + interaction.user.username, iconURL: interaction.client.user.avatarURL() })
+                            .addFields(
+                                { name: "User ID:", value: `\`${interaction.user.id}\`` },
+                                { name: "Reason:", value: `\`Selected wrong captcha text\`` }
+                            )
+                            .setFooter({ text: "Ban Time" })
+                            .setTimestamp()
+                            .setColor('#0xed4245')
+                            .setThumbnail(interaction.user.avatarURL());
+
+                        webhookClient.send({
+                            content: `<@!${interaction.user.id}>`,
+                            username: 'Obelisk Logger',
+                            embeds: [embed],
+                        });
+                        await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_STOP_BAN").format(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED")), interaction.client.getWordLanguage(serverSettings.lang, "CM_LOCKED"))] })
+                        await interaction.client.databaseEditData("insert into ban_list (user_id, ban_by, reason) values (?, ?, ?)", [interaction.user.id, `735090182893862954`, "Captcha validation failed. You have selected the wrong captcha text."])
+
+                        return [true, false];
+                    }
                     const width = 500
                     const height = 80
                     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -101,26 +126,28 @@ module.exports = {
 
                     var textToEmbed = new MessageEmbed()
                         .setColor('0x009dff')
-                        .setAuthor("Macro Detector", interaction.user.avatarURL())
+                        .setAuthor({ name: "Macro Detector", iconURL: interaction.user.avatarURL() })
                         .setImage('attachment://Never_gonna_give_you_up_Never_gonna_let_you_down_Never_gonna_run_around_and_desert_you_Never_gonna_make_you_cry_Never_gonna_say_goodbye_Never_gonna_tell_a_lie_and_hurt_you.png')
                         .setDescription(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_MSG"))
 
 
-                    interaction.reply({ embeds: [textToEmbed], components: [row], files: [attachment] });
+                    interaction.editReply({ embeds: [textToEmbed], components: [row], files: [attachment] });
 
-                    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
                     let selected = false;
 
-                    const collector = await interaction.channel.createMessageComponentCollector({ filter, time: 25000 });
+                    const collector = msg.createMessageComponentCollector({ time: 25000 });
 
                     let collectorRunning = true;
                     var array = [];
 
                     collector.on('collect', async i => {
+                        i.deferUpdate();
+                        if (i.user.id != interaction.user.id) {
+                            return;
+                        }
                         selected = true;
                         if (i.values[0] !== text) {
                             selected = true;
-                            await interaction.client.databaseEditData("update macro_detector set captcha_count = captcha_count + 1 where user_id = ?", [interaction.user.id]);
                             await userDailyLogger(interaction, interaction.user, "captcha", `Selected wrong captcha on Hunt. Selected [${i.values[0]}] instead of [${text}]`);
                             await interaction.editReply({
                                 embeds: [interaction.client.redEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED"), interaction.client.getWordLanguage(serverSettings.lang, "CAPTCHA_FAILED_TITLE"), i.user)], components: [], files: []
@@ -130,10 +157,12 @@ module.exports = {
                                 const webhookClient = new WebhookClient({ id: process.env.webhookId, token: process.env.webhookToken });
 
                                 const embed = new MessageEmbed()
-                                    .setAuthor(`${interaction.client.user.username} banned ${interaction.user.username}`, interaction.client.user.avatarURL())
-                                    .addField("User ID:", `\`${interaction.user.id}\``)
-                                    .addField("Reason:", `\`Selected wrong captcha text\``)
-                                    .setFooter("Ban Time")
+                                    .setAuthor({ name: interaction.client.user.username + " banned " + interaction.user.username, iconURL: interaction.client.user.avatarURL() })
+                                    .addFields(
+                                        { name: "User ID:", value: `\`${interaction.user.id}\`` },
+                                        { name: "Reason:", value: `\`Selected wrong captcha text\`` }
+                                    )
+                                    .setFooter({ text: "Ban Time" })
                                     .setTimestamp()
                                     .setColor('#0xed4245')
                                     .setThumbnail(interaction.user.avatarURL());
@@ -161,8 +190,8 @@ module.exports = {
                         collectorRunning = false;
                         if (!selected) {
                             selectedRightCapthca = false;
-                            await interaction.client.databaseEditData("update macro_detector set captcha_count = captcha_count + 1 where user_id = ?", [interaction.user.id]);
-                            await interaction.editReply({ embeds: [interaction.client.redEmbed("**Interaction time out**")], components: [], files: [] });
+                            await userDailyLogger(interaction, interaction.user, "captcha", `Failed. Timeout!`);
+                            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_I_TIMEOUT'))], components: [], files: [] });
                             array = [true, false];
                         }
                     });
@@ -179,7 +208,7 @@ module.exports = {
 
         }
 
-
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             var date = new Date();
 
@@ -188,7 +217,7 @@ module.exports = {
                 // check last hunt lock time 
                 let elapsedTimeFromHuntLock = Math.floor((date.getTime() - interaction.client.strToDate(userInfo.boss_fight).getTime()));
                 if (elapsedTimeFromHuntLock < 1140000) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_STOP_FIGHTING"), interaction.client.getWordLanguage(serverSettings.lang, "LOCKED"))] });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_STOP_FIGHTING"), interaction.client.getWordLanguage(serverSettings.lang, "LOCKED"))] });
                 }
             }
 
@@ -237,7 +266,7 @@ module.exports = {
                     let elapsedTimeFromHunt = Math.floor((interaction.client.strToDate(userCD[0].hunt).getTime() - date.getTime()) / 1000);
                     // check remaining time 
                     if (elapsedTimeFromHunt > 0) {
-                        return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_P").format(" `" + (elapsedTimeFromHunt) + "`s", "https://www.patreon.com/obelisk_rpg1"), interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_T").format("Hunt"))], ephemeral: true });;
+                        return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_P").format(" `" + (elapsedTimeFromHunt) + "`s", "https://www.patreon.com/obelisk_rpg1"), interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_T").format("Hunt"))], ephemeral: true });;
                     }
                 }
 
@@ -246,14 +275,12 @@ module.exports = {
 
             await userDailyLogger(interaction, interaction.user, "hunt", "Hunt Started")
 
-            //await interaction.reply({ embeds: [interaction.client.blueEmbed("Request recieved.")] })
-
             // check if on captcha
             var captchaRequired = true;
             var captchaData = await interaction.client.databaseSelectData("select * from macro_detector where user_id = ?", [interaction.user.id]);
             captchaData = captchaData[0]
 
-            var captchaReturn = await generateMacroDetector(captchaData, interaction, serverSettings);
+            var captchaReturn = await generateMacroDetector(captchaData, interaction, serverSettings, msg);
             if (captchaReturn !== undefined) {
                 interactionReplied = captchaReturn[0];
                 selectedRightCapthca = captchaReturn[1];
@@ -279,7 +306,7 @@ module.exports = {
                                     await interaction.editReply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "BUFFS_DEATH_END"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))] })
                                     await new Promise(r => setTimeout(r, 2000));
                                 } else {
-                                    await interaction.reply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "BUFFS_DEATH_END"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))] })
+                                    await interaction.editReply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "BUFFS_DEATH_END"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))] })
                                     await new Promise(r => setTimeout(r, 2000));
                                 }
                             }
@@ -297,13 +324,16 @@ module.exports = {
                                     })
                                 } else {
                                     interactionReplied = true;
-                                    await interaction.reply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "BUFFS_DEATH_EXPIRED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: [rowYesNo] })
+                                    await interaction.editReply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "BUFFS_DEATH_EXPIRED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: [rowYesNo] })
                                 }
 
-                                collectorFilter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
-                                collector = interaction.channel.createMessageComponentCollector({ collectorFilter, time: 15000 });
+                                collector = msg.createMessageComponentCollector({ time: 15000 });
 
                                 collector.on('collect', async i => {
+                                    i.deferUpdate();
+                                    if (i.user.id != interaction.user.id) {
+                                        return;
+                                    }
                                     if (i.customId === "yes") {
                                         continueCode = true;
                                     } else {
@@ -410,11 +440,10 @@ module.exports = {
 
 
 
-
                     // familiar stats
                     if (!['none', ''].includes(userInfo.pet_id)) {
-                        var petInfo = interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id.toUpperCase()]);
-                        petInfo = petInfo[0];;
+                        var petInfo = await interaction.client.databaseSelectData("select * from users_pet where pet_id = ? and user_id = ?", [userInfo.pet_id.toUpperCase(), interaction.user.id]);
+                        petInfo = petInfo[0];
                         if (petInfo !== undefined) {
                             if (petInfo.happiness > 50) {
                                 var petStatData = petInfo.stat.split("-");
@@ -435,18 +464,10 @@ module.exports = {
                                 } else {
                                     luck += parseInt(petStatData[1])
                                 }
-
                             } else {
                                 await userDailyLogger(interaction, interaction.user, "familiar", "Familiar Unequipped low happiness")
                                 await interaction.client.databaseEditData("update users set pet_id = 'null' where user_id = ?", [interaction.user.id])
-                                if (interactionReplied) {
-                                    await interaction.editReply({
-                                        embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "FAMILIAR_UNEQUIPPED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: []
-                                    })
-                                } else {
-                                    interactionReplied = true;
-                                    await interaction.reply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "FAMILIAR_UNEQUIPPED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: [] })
-                                }
+                                await interaction.followUp({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "FAMILIAR_UNEQUIPPED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: [], ephemeral: true })
                                 await new Promise(r => setTimeout(r, 2000));
                             }
                         }
@@ -472,16 +493,18 @@ module.exports = {
 
                     monsterHP = Math.ceil(selectedMonster.hp + ((selectedMonster.hp * 0.7) * monsterLvl));
                     monsterGold = getRandomNumberBetween((monsterHP * 0.04), (monsterHP * 0.08)) + 5;
-                    monsterExp = Math.ceil(monsterHP * 0.08 * (monsterHP * 0.05 * (monsterLvl - userLvl)) / 10);
+                    monsterExp = Math.ceil(monsterHP * 0.08 + (monsterHP * 0.05 * (monsterLvl - userLvl)) / 10);
                     monsterATK = Math.ceil(selectedMonster.atk + ((selectedMonster.atk * 0.5) * monsterLvl))
 
-                    if (monsterExp < 0) monsterExp = 0;
+                    if (monsterExp < 0) {
+                        monsterExp = 0;
+                    }
 
 
                     // apply boost
                     if (userBuffsData !== undefined) {
                         let tileLeftBoost = Math.floor((userBuffsData.exp_date.getTime() - date.getTime()) / 1000);
-                        if (tileLeftBoost > 0) monsterExp = monsterExp * (1 + userBuffsData.exp_percentage / 100);
+                        if (tileLeftBoost > 0) { monsterExp = monsterExp * (1 + userBuffsData.exp_percentage / 100); }
                     }
 
                     monsterDrops = selectedMonster.drop_n_q.split(';');
@@ -505,9 +528,11 @@ module.exports = {
 
                     for (var i = 0; i < monsterDrops.length; i++) {
                         dropChancePercent = [100 - monsterDropsPercentage[i], monsterDropsPercentage[i]];
-                        dropFound = weightedRandom(dropChanceOptions, dropChancePercent).item;
-                        if (!dropFound) {
+                        dropFound = weightedRandom(dropChanceOptions, dropChancePercent);
+                        if (dropFound === undefined) {
                             continue;
+                        } else {
+                            dropFound = dropFound.item;
                         }
                         splitNameQuantiy = monsterDrops[i].split('-');
                         dropName = splitNameQuantiy[0];
@@ -603,23 +628,25 @@ module.exports = {
 
                     const searchingEmbed = new MessageEmbed()
                         .setColor('0xe67e22')
-                        .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_SEARCHING'))
+                        .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_SEARCHING') })
                         .setImage('https://i.imgur.com/jxks0Pp.gif');
 
                     const foundMonsterEmbed = new MessageEmbed()
                         .setColor('0xe67e22')
-                        .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'MONSTER_FOUND').format(monsterLvl, selectedMonster.name))
+                        .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'MONSTER_FOUND').format(monsterLvl, selectedMonster.name) })
                         .setImage(`https://obelisk.club/monsters/${selectedMonster.img_link}.png`);
 
 
                     const huntingEmbed = new MessageEmbed()
                         .setColor('0x14e188')
-                        .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_STARTED'))
+                        .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_STARTED') })
                         .setThumbnail(`https://obelisk.club/monsters/${selectedMonster.img_link}.png`)
-                        .addField(interaction.client.getWordLanguage(serverSettings.lang, 'NAME'), `${monsterRankEmoji} ${selectedMonster.name} ${monsterLvl}`, false)
-                        .addField(interaction.client.getWordLanguage(serverSettings.lang, 'YOUR_INFO'), `<:hp:740144919233953834> ${userInfo.current_hp}/${userInfo.hp}\n<:mp:740144919125164044> ${userInfo.current_mp}/${userInfo.mp}`, true)
-                        .addField(interaction.client.getWordLanguage(serverSettings.lang, 'MONSTER_INFO'), `<:hp:740144919233953834> ${monsterHP}/${monsterHP}\n<:rg:740144919406182421> 0/100`, true)
-                        .setFooter(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_FIGHTING'), "https://i.imgur.com/SNfXuvR.gif");
+                        .addFields(
+                            { name: interaction.client.getWordLanguage(serverSettings.lang, 'NAME'), value: `${monsterRankEmoji} ${selectedMonster.name} ${monsterLvl}`, inline: false },
+                            { name: interaction.client.getWordLanguage(serverSettings.lang, 'YOUR_INFO'), value: `<:hp:740144919233953834> ${userInfo.current_hp}/${userInfo.hp}\n<:mp:740144919125164044> ${userInfo.current_mp}/${userInfo.mp}`, inline: true },
+                            { name: interaction.client.getWordLanguage(serverSettings.lang, 'MONSTER_INFO'), value: `<:hp:740144919233953834> ${monsterHP}/${monsterHP}\n<:rg:740144919406182421> 0/100`, inline: true }
+                        )
+                        .setFooter({ text: interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_FIGHTING'), iconURL: "https://i.imgur.com/SNfXuvR.gif" });
 
                     if (interactionReplied) {
                         await interaction.editReply({
@@ -627,7 +654,7 @@ module.exports = {
                         })
                     } else {
                         interactionReplied = true;
-                        await interaction.reply({ embeds: [searchingEmbed], components: [] })
+                        await interaction.editReply({ embeds: [searchingEmbed], components: [] })
                     }
 
                     await new Promise(r => setTimeout(r, 2000));
@@ -638,7 +665,7 @@ module.exports = {
                         })
                     } else {
                         interactionReplied = true;
-                        await interaction.reply({ embeds: [foundMonsterEmbed], components: [] })
+                        await interaction.editReply({ embeds: [foundMonsterEmbed], components: [] })
                     }
 
                     await new Promise(r => setTimeout(r, 2000));
@@ -649,7 +676,7 @@ module.exports = {
                         })
                     } else {
                         interactionReplied = true;
-                        await interaction.reply({ embeds: [huntingEmbed], components: [] })
+                        await interaction.editReply({ embeds: [huntingEmbed], components: [] })
                     }
 
                     await new Promise(r => setTimeout(r, 2000));
@@ -707,7 +734,7 @@ module.exports = {
                             huntTurnlog += `\n-----------------------------------------------------\nTANK PASSIVE DMG BOOST -> [${playerTemTurnDmg}]\nNEW ${interaction.user.username} DMG -> [${playerTurnDmg}]\n-----------------------------------------------------`;
                         }
 
-                        if (userInfo.clss === "Assassin" && playerDodged && !monsterDodged) {
+                        if (userInfo.class === "Assassin" && playerDodged && !monsterDodged) {
                             playerTemTurnDmg = Math.ceil(playerTurnDmg * 1.5 * monsterTurnDmg) - playerTurnDmg;
                             playerTurnDmg += playerTemTurnDmg;
                             huntTurnlog += `\n-----------------------------------------------------\nASSASSIN PASSIVE DMG BOOST -> [${playerTemTurnDmg}]\nNEW ${interaction.user.username} DMG -> [${playerTurnDmg}]\n-----------------------------------------------------`;
@@ -715,7 +742,7 @@ module.exports = {
                         }
 
 
-                        huntTurnlog += `\n${interaction.user.username} attacked ${selectedMonster.name} for [${playerTurnDmg}] amout of damage.`;
+                        huntTurnlog += `\n${interaction.user.username} attacked ${selectedMonster.name} for [${playerTurnDmg}] amount of damage.`;
 
                         if (monsterDodged) {
                             playerTurnDmg = 0;
@@ -723,14 +750,8 @@ module.exports = {
                         } else {
                             monsterHP -= playerTurnDmg;
 
-                            rage += playerTurnDmg;
-                            if (rage > 99) {
-                                monsterTurnDmg = monsterTurnDmg * 3;
-                                rage = 0;
-                            }
-                            if (rage > 100) {
-                                rage = 100;
-                            }
+                            rage += Math.ceil(playerTurnDmg / 4);
+
 
                             if (userInfo.class == 'Warrior') {
                                 playerTemHP = playerHP + playerTurnDmg;
@@ -752,18 +773,23 @@ module.exports = {
 
                         }
 
-                        huntTurnlog += `\n${selectedMonster.name} attacked ${interaction.user.username} for [${playerTurnDmg}] amout of damage.`;
+                        huntTurnlog += `\n${selectedMonster.name} attacked ${interaction.user.username} for [${monsterTurnDmg}] amount of damage.`;
 
 
                         if (playerDodged) {
                             monsterTurnDmg = 0;
                             huntTurnlog += `\n<< ${interaction.user.username} Evaded >>`;
+                            huntTurnlog += `\n>> ${interaction.user.username} HP -> [${playerHP}/${userInfo.hp}] <<`;
                         } else {
                             monsterTurnDmg = monsterTurnDmg - userInfo.armor;
+                            if (rage > 99) {
+                                monsterTurnDmg = monsterTurnDmg * 3;
+                                rage = 0;
+                            }
                             if (monsterTurnDmg < 0) {
                                 monsterTurnDmg = 0;
                             }
-                            huntTurnlog += `\n${interaction.user.username} ARMOR CAN SUBTRUCT [${userInfo.armor}] DMG\nNEW ${selectedMonster.name} DMG -> [${monsterTurnDmg}]`;
+                            huntTurnlog += `\n${interaction.user.username} ARMOR CAN SUBTRACT [${userInfo.armor}] DMG\nNEW ${selectedMonster.name} DMG -> [${monsterTurnDmg}]`;
                             playerHP -= monsterTurnDmg;
 
                             if (playerHP < 1) {
@@ -815,24 +841,28 @@ module.exports = {
                             await userDailyLogger(interaction, interaction.user, "hunt", `Hunt completed. Rewards -> EXP -> [${monsterExp}] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}] DROP/S -> [${dropString.substring(1)}]`);
                             huntEndEmbed = new MessageEmbed()
                                 .setColor('0x14e188')
-                                .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_COMPLETED'))
+                                .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_COMPLETED') })
                                 .setThumbnail(`https://obelisk.club/monsters/${selectedMonster.img_link}.png`)
-                                .addField(interaction.client.getWordLanguage(serverSettings.lang, 'MONSTER_INFO'), `${monsterRankEmoji} ${selectedMonster.name} LvL${monsterLvl}`, true)
-                                .addField(interaction.client.getWordLanguage(serverSettings.lang, 'YOUR_INFO'), `<:hp:740144919233953834> ${playerHP}/${userInfo.hp}\n<:mp:740144919125164044> ${playerMP}/${userInfo.mp}`, true)
-                                .addField(interaction.client.getWordLanguage(serverSettings.lang, 'REWARDS'), `\`\`\`css\nEXP -> [${monsterExp}] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}]\`\`\``, false)
-                                .addField(interaction.client.getWordLanguage(serverSettings.lang, 'FOUND_MATERIALS'), `\`\`\`css\n${dropString.substring(1)}\`\`\``, false)
-                                .setFooter(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_POTIONS').format(potionUsed));
+                                .addFields(
+                                    { name: interaction.client.getWordLanguage(serverSettings.lang, 'MONSTER_INFO'), value: `${monsterRankEmoji} ${selectedMonster.name} LvL${monsterLvl}`, inline: true },
+                                    { name: interaction.client.getWordLanguage(serverSettings.lang, 'YOUR_INFO'), value: `<:hp:740144919233953834> ${playerHP}/${userInfo.hp}\n<:mp:740144919125164044> ${playerMP}/${userInfo.mp}`, inline: true },
+                                    { name: interaction.client.getWordLanguage(serverSettings.lang, 'REWARDS'), value: `\`\`\`css\nEXP -> [${monsterExp}] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}]\`\`\``, inline: false },
+                                    { name: interaction.client.getWordLanguage(serverSettings.lang, 'FOUND_MATERIALS'), value: `\`\`\`css\n${dropString.substring(1)}\`\`\``, inline: false }
+                                )
+                                .setFooter({ text: interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_POTIONS').format(potionUsed) });
                         } else {
                             await userDailyLogger(interaction, interaction.user, "hunt", `Hunt completed. Rewards -> EXP -> [${Math.ceil(monsterExp * 0.9)}] [${Math.ceil(monsterExp * 0.1)} for CLAN] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}] DROP/S -> [${dropString.substring(1)}]`);
                             huntEndEmbed = new MessageEmbed()
                                 .setColor('0x14e188')
-                                .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_COMPLETED'))
+                                .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_COMPLETED') })
                                 .setThumbnail(`https://obelisk.club/monsters/${selectedMonster.img_link}.png`)
-                                .addField(interaction.client.getWordLanguage(serverSettings.lang, 'MONSTER_INFO'), `${monsterRankEmoji} ${selectedMonster.name} LvL${monsterLvl}`, true)
-                                .addField(interaction.client.getWordLanguage(serverSettings.lang, 'YOUR_INFO'), `<:hp:740144919233953834> ${playerHP}/${userInfo.hp}\n<:mp:740144919125164044> ${playerMP}/${userInfo.mp}`, true)
-                                .addField(interaction.client.getWordLanguage(serverSettings.lang, 'REWARDS'), `\`\`\`css\nEXP -> [${Math.ceil(monsterExp * 0.9)}] [${Math.ceil(monsterExp * 0.1)} for CLAN] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}]\`\`\``, false)
-                                .addField(interaction.client.getWordLanguage(serverSettings.lang, 'FOUND_MATERIALS'), `\`\`\`css\n${dropString.substring(1)}\`\`\``, false)
-                                .setFooter(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_POTIONS').format(potionUsed));
+                                .addFields(
+                                    { name: interaction.client.getWordLanguage(serverSettings.lang, 'MONSTER_INFO'), value: `${monsterRankEmoji} ${selectedMonster.name} LvL${monsterLvl}`, inline: true },
+                                    { name: interaction.client.getWordLanguage(serverSettings.lang, 'YOUR_INFO'), value: `<:hp:740144919233953834> ${playerHP}/${userInfo.hp}\n<:mp:740144919125164044> ${playerMP}/${userInfo.mp}`, inline: true },
+                                    { name: interaction.client.getWordLanguage(serverSettings.lang, 'REWARDS'), value: `\`\`\`css\nEXP -> [${Math.ceil(monsterExp * 0.9)}] [${Math.ceil(monsterExp * 0.1)} for CLAN] GOLD -> [${monsterGold}] HONOR -> [${monsterLvl}]\`\`\``, inline: false },
+                                    { name: interaction.client.getWordLanguage(serverSettings.lang, 'FOUND_MATERIALS'), value: `\`\`\`css\n${dropString.substring(1)}\`\`\``, inline: false }
+                                )
+                                .setFooter({ text: interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_POTIONS').format(potionUsed) });
                             monsterExp = Math.ceil(monsterExp * 0.9);
                         }
 
@@ -933,7 +963,8 @@ module.exports = {
                                         await interaction.client.databaseEditData("update created_quest set todo = ? where id = ?", [newTodoList.join(";"), questData.id])
                                     }
                                 } else {
-                                    await interaction.followUp({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_EXPIRED'))] })
+                                    await interaction.client.databaseEditData("update created_quest set status = ? where id = ?", ["expired", questData.id])
+                                    await interaction.followUp({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_EXPIRED'))], ephemeral: true })
                                 }
                             }
                         }
@@ -961,7 +992,7 @@ module.exports = {
                         }
 
                         // add gold, exp, honor
-                        await interaction.client.databaseEditData("update users set gold = gold + ? , exp = ? , honor = honor + ?, free_stat_points = ?, hp = ?, current_hp = ?, current_mp = ?, level = ? where user_id = ?",
+                        await interaction.client.databaseEditData("update users set gold = gold + ? , exp = ? , honor = honor + ?, free_stat_points = ?, hp = ?, current_hp = ?, current_mp = ?, level = ?,l_kills = l_kills + 1 where user_id = ?",
                             [monsterGold, monsterExp, monsterLvl, userInfo.free_stat_points, userInfo.hp, playerHP, playerMP, userInfo.level, interaction.user.id]);
 
                         // add drop reward
@@ -977,11 +1008,13 @@ module.exports = {
                         var goldLost = userInfo.gold - Math.ceil(userInfo.gold * 0.75);
                         huntEndEmbed = new MessageEmbed()
                             .setColor('0xed4245')
-                            .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_DIED').format(interaction.user.username, `${selectedMonster.name} LvL${monsterLvl}`))
+                            .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_DIED').format(interaction.user.username, `${selectedMonster.name} LvL${monsterLvl}`) })
                             .setThumbnail(`https://obelisk.club/monsters/${selectedMonster.img_link}.png`)
-                            .addField(interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST'), `\`\`\`css\nEXP -> [${userInfo.exp}] GOLD -> [${goldLost}]\`\`\``, false)
+                            .addFields(
+                                { name: interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST'), value: `\`\`\`css\nEXP -> [${userInfo.exp}] GOLD -> [${goldLost}]\`\`\``, inline: false }
+                            )
                         await userDailyLogger(interaction, interaction.user, "hunt", `Player Died. Penalties EXP -> [${userInfo.exp}] GOLD -> [${goldLost}]`)
-                        await interaction.client.databaseEditData("update users set gold = gold - ?, exp = exp - ? where user_id = ?", [userInfo.exp, goldLost, interaction.user.id])
+                        await interaction.client.databaseEditData("update users set gold = gold - ?, exp = ? where user_id = ?", [goldLost, userInfo.exp, interaction.user.id])
                     } else if (playerDied && deathHuntCount != 0) {
                         showLog = true;
                         if (deathHuntCount === -1) {
@@ -991,9 +1024,11 @@ module.exports = {
                         }
                         huntEndEmbed = new MessageEmbed()
                             .setColor('0xed4245')
-                            .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_DIED').format(interaction.user.username, `${selectedMonster.name} LvL${monsterLvl}`))
+                            .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_DIED').format(interaction.user.username, `${selectedMonster.name} LvL${monsterLvl}`) })
                             .setThumbnail(`https://obelisk.club/monsters/${selectedMonster.img_link}.png`)
-                            .addField(interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST'), `\`\`\`css\n${interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST_NONE')}\`\`\``, false)
+                            .addFields(
+                                { name: interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST'), value: `\`\`\`css\n${interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST_NONE')}\`\`\``, inline: false }
+                            )
                         await userDailyLogger(interaction, interaction.user, "hunt", `Player Died. Protection found, no penalties applied.`)
                     } else if (monsterRunAway && playerHP > 1) {
                         huntEndEmbed = interaction.client.redEmbed(`**${interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_MONSTER_RUN_T')}**\n${interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_MONSTER_RUN')}`)
@@ -1104,12 +1139,8 @@ module.exports = {
                 }
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
 
     }

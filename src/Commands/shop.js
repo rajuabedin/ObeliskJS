@@ -1,6 +1,6 @@
 const Command = require('../Structures/Command.js');
 const errorLog = require('../Utility/logger').logger;
-const { MessageActionRow, MessageButton, MessageSelectMenu, MessageEmbed, MessageAttachment } = require('discord.js');
+const { MessageActionRow, MessageButton, MessageSelectMenu, MessageEmbed, MessageAttachment, ComponentType } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 
 module.exports = {
@@ -24,8 +24,8 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
-
             function paginate(arr, size) {
                 return arr.reduce((acc, val, i) => {
                     let idx = Math.floor(i / size);
@@ -65,7 +65,7 @@ module.exports = {
             }
 
             if (shopData[0] === undefined && searchName !== null) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SHOP_NF_NAME').format(searchName))] });
+                return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SHOP_NF_NAME').format(searchName))] });
             } else {
                 auroraValue = await interaction.client.databaseSelectData("select * from user_inventory where user_id = ? and item_name = ?", [interaction.user.id, "Aurora"])
                 if (auroraValue[0] !== undefined) {
@@ -96,38 +96,36 @@ module.exports = {
 
                 var embed = new MessageEmbed()
                     .setColor('0x14e188')
-                    .setAuthor("Pandora's Shop")
+                    .setAuthor({ name: "Pandora's Shop" })
                     .setImage(`https://obelisk.club/npc/Shop_banner.png`)
                     .setDescription(shopData[0])
-                    .setFooter(interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages));
+                    .setFooter({ text: interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages) });
                 if (maxPages > 1) {
-                    await interaction.reply({ embeds: [embed], components: [row] });
-                    buttonHandler(userInfo, interaction, serverSettings, shopData);
+                    await interaction.editReply({ embeds: [embed], components: [row] });
+                    buttonHandler(userInfo, interaction, serverSettings, shopData, msg);
                 } else {
-                    await interaction.reply({ embeds: [embed] });
+                    await interaction.editReply({ embeds: [embed] });
                 }
 
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
 
-function buttonHandler(userInfo, interaction, serverSettings, shopData) {
+function buttonHandler(userInfo, interaction, serverSettings, shopData, msg) {
     let index = 0;
     var maxPages = shopData.length - 1;
 
-    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
-
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
+        i.deferUpdate();
+        if (i.user.id != interaction.user.id) {
+            return;
+        }
         collector.resetTimer({ time: 15000 });
         if (i.customId === 'left')
             index--;
@@ -139,11 +137,11 @@ function buttonHandler(userInfo, interaction, serverSettings, shopData) {
             index = maxPages;
         var embed = new MessageEmbed()
             .setColor('0x14e188')
-            .setAuthor("Pandora's Shop")
+            .setAuthor({ name: "Pandora's Shop" })
             .setImage(`https://obelisk.club/npc/Shop_banner.png`)
             .setDescription(shopData[index])
-            .setFooter(interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1));
-        await i.update({ embeds: [embed], components: [row] });
+            .setFooter({ text: interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1) });
+        await interaction.editReply({ embeds: [embed], components: [row] });
     });
 
     collector.on('end', collected => {

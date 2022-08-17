@@ -3,3 +3,7 @@ src/.env
 src/User_Log
 logs
 node_modules
+src/Commands/temp.js
+src/Commands/temp2.js
+src/Commands/temp3.js
+src/Commands/temp2 copy.js

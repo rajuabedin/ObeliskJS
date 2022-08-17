@@ -111,10 +111,10 @@ class Client extends Discord.Client {
     whitePagesImageBottomEmbed(text, tittle = "", user, footer, imageUrl) {
         const textToEmbed = new Discord.MessageEmbed()
             .setColor('0xfafafa')
-            .setAuthor(tittle, user.avatarURL())
+            .setAuthor({ name: tittle, iconURL: user.avatarURL() })
             .setDescription(text)
             .setImage(imageUrl)
-            .setFooter(footer)
+            .setFooter({ text: footer })
         return textToEmbed
     }
 
@@ -129,19 +129,19 @@ class Client extends Discord.Client {
     bluePagesEmbed(text, tittle = "", user, footer) {
         const textToEmbed = new Discord.MessageEmbed()
             .setColor('0x009dff')
-            .setAuthor(tittle, user.avatarURL())
+            .setAuthor({ name: tittle, iconURL: user.avatarURL() })
             .setDescription(text)
-            .setFooter(footer)
+            .setFooter({ text: footer })
         return textToEmbed
     }
 
     bluePagesImageEmbed(text, tittle = "", user, footer, imageUrl) {
         const textToEmbed = new Discord.MessageEmbed()
             .setColor('0x009dff')
-            .setAuthor(tittle, user.avatarURL())
+            .setAuthor({ name: tittle, iconURL: user.avatarURL() })
             .setDescription(text)
             .setThumbnail(imageUrl)
-            .setFooter(footer)
+            .setFooter({ text: footer })
         return textToEmbed
     }
 
@@ -157,7 +157,7 @@ class Client extends Discord.Client {
     blueEmbedImage(text, tittle = "", user) {
         const textToEmbed = new Discord.MessageEmbed()
             .setColor('0x009dff')
-            .setAuthor(tittle, user.avatarURL())
+            .setAuthor({ name: tittle, iconURL: user.avatarURL() })
             .setURL('https://obelisk.club/')
             .setDescription(text)
         return textToEmbed
@@ -175,7 +175,7 @@ class Client extends Discord.Client {
     greenEmbedImage(text, tittle = "", user) {
         const textToEmbed = new Discord.MessageEmbed()
             .setColor('0x14e188')
-            .setAuthor(tittle, user.avatarURL())
+            .setAuthor({ name: tittle, iconURL: user.avatarURL() })
             .setURL('https://obelisk.club/')
             .setDescription(text)
         return textToEmbed
@@ -193,7 +193,7 @@ class Client extends Discord.Client {
     redEmbedImage(text, tittle = "", user) {
         const textToEmbed = new Discord.MessageEmbed()
             .setColor('0xed4245')
-            .setAuthor(tittle, user.avatarURL())
+            .setAuthor({ name: tittle, iconURL: user.avatarURL() })
             .setURL('https://obelisk.club/')
             .setDescription(text)
         return textToEmbed
@@ -211,7 +211,7 @@ class Client extends Discord.Client {
     yellowEmbedImage(text, tittle = "", user) {
         const textToEmbed = new Discord.MessageEmbed()
             .setColor('0xffff00')
-            .setAuthor(tittle, user.avatarURL())
+            .setAuthor({ name: tittle, iconURL: user.avatarURL() })
             .setURL('https://obelisk.club/')
             .setDescription(text)
         return textToEmbed
@@ -220,10 +220,10 @@ class Client extends Discord.Client {
     yellowPagesImageEmbed(text, tittle = "", user, footer, imageUrl) {
         const textToEmbed = new Discord.MessageEmbed()
             .setColor('0xffff00')
-            .setAuthor(tittle, user.avatarURL())
+            .setAuthor({ name: tittle, iconURL: user.avatarURL() })
             .setDescription(text)
             .setThumbnail(imageUrl)
-            .setFooter(footer)
+            .setFooter({ text: footer })
         return textToEmbed
     }
 
@@ -271,19 +271,13 @@ class Client extends Discord.Client {
         return new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
     }
 
-    /**
-     * 
-     * @param {String} query 
-     * @param {Array} args 
-     * @returns 
-     */
-
     async databaseSelectData(query, args) {
         var result = await this.usePooledConnectionAsync(async connection => {
             const rows = await new Promise((resolve, reject) => {
                 connection.query(query, args, function (error, results, fields) {
                     if (error) {
-                        reject(error);
+                        connection.query('insert into bot_log (exceptionType, exceptionMessage, fullException, commandName, userID) values (?,?,?,?,?)', ['error', error.message, error.stack, "Mysql Query", "Not Defied"]);
+                        resolve([]);
                     } else {
                         resolve(results);
                     }
@@ -305,7 +299,8 @@ class Client extends Discord.Client {
             const rowsCount = await new Promise((resolve, reject) => {
                 connection.query(query, args, function (error, results, fields) {
                     if (error) {
-                        reject(error);
+                        connection.query('insert into bot_log (exceptionType, exceptionMessage, fullException, commandName, userID) values (?,?,?,?,?)', ['error', error.message, error.stack, "Mysql Query", "Not Defied"]);
+                        resolve([]);
                     } else {
                         resolve(results.affectedRows);
                     }
@@ -330,9 +325,15 @@ class Client extends Discord.Client {
     async databaseEditDataReturnID(query, args) {
         var result = await this.usePooledConnectionAsync(async connection => {
             const rowsCount = await new Promise((resolve, reject) => {
-                connection.query(query, args, function (error, results, fields) {
+                connection.query(query, args, async function (error, results, fields) {
                     if (error) {
-                        reject(error);
+                        let errorID = await new Promise((resolve, reject) => {
+                            connection.query('insert into bot_log (exceptionType, exceptionMessage, fullException, commandName, userID) values (?,?,?,?,?)',
+                                ['error', error.message, error.stack, "Mysql Query", "Not Defied"], function (error1, results, fields) {
+                                    resolve(results.insertId);
+                                });
+                        });
+                        resolve(errorID);
                     } else {
                         resolve(results.insertId);
                     }

@@ -19,6 +19,7 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             var user = interaction.options.getUser('player');
             if (user === null) {
@@ -26,7 +27,7 @@ module.exports = {
             } else {
                 var selectedPlayerData = await interaction.client.databaseSelectData("select * from users where user_id = ?", [user.id]);
                 if (selectedPlayerData[0] === undefined) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_ACC_FOUND'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_ACC_FOUND'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
                 }
             }
 
@@ -58,18 +59,14 @@ module.exports = {
                 .then(response => response.json())
                 .then(data => { return data });
             if (data.success == true) {
-                await interaction.reply(`https://obelisk.club/user_files/${user.id}/${data.filename}`)
+                await interaction.editReply(`https://obelisk.club/user_files/${user.id}/${data.filename}`)
             } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-                errorLog.error(data.error, { 'command_name': interaction.commandName });
+                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
+                errorLog.custom(data.error, interaction);
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }

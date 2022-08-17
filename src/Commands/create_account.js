@@ -38,16 +38,18 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             if (userInfo !== undefined) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_ACCOUNT_EXIST'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_ACCOUNT_EXIST'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
             }
 
             // get confirmation they read skills
-            await interaction.reply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CREATE_CREATING').format(interaction.options.getString("class")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
-            let collectorFilter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
-            collector = interaction.channel.createMessageComponentCollector({ collectorFilter, time: 15000 });
+            await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CREATE_CREATING').format(interaction.options.getString("class")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
+
+            collector = msg.createMessageComponentCollector({ time: 15000 });
             collector.on('collect', async i => {
+                if (i.user.id !== interaction.user.id) return;
                 if (i.customId === "yes") {
                     await interaction.client.databaseEditData("INSERT INTO users (user_id, username, class, gender, race, level, exp, gold) VALUES (?,?,?,?,?,?,?,?)",
                         [interaction.user.id, interaction.user.username, interaction.options.getString("class"), interaction.options.getString("gender"), interaction.options.getString("race"), 0, 0, 100]);
@@ -61,12 +63,8 @@ module.exports = {
             });
 
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }

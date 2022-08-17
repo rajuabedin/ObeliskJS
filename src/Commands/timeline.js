@@ -72,6 +72,7 @@ module.exports = {
                 return 0;
             }
         }
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             let date = new Date();
             let embed;
@@ -89,8 +90,10 @@ module.exports = {
                     .setColor("0xed4245")
                     .setTitle(`${interaction.user.username}'s ${interaction.client.getWordLanguage(serverSettings.lang, 'TIMELINE')}`)
                     .setDescription(`${interaction.client.getWordLanguage(serverSettings.lang, 'LAST_10_LOGS')}\n\`\`\`css\n${interaction.client.getWordLanguage(serverSettings.lang, "NO_DATA")}\`\`\``)
-                    .addField(interaction.client.getWordLanguage(serverSettings.lang, 'PLAYING_FOR').format(interaction.client.user.username), `\`${msToTime(elapsedTimeFromTaskStarted)}\``, true)
-                    .addField(interaction.client.getWordLanguage(serverSettings.lang, "SERVER_TIME"), dateStr, true);
+                    .addFields(
+                        { name: interaction.client.getWordLanguage(serverSettings.lang, 'PLAYING_FOR').format(interaction.client.user.username), value: `\`${msToTime(elapsedTimeFromTaskStarted)}\``, inline: true },
+                        { name: interaction.client.getWordLanguage(serverSettings.lang, 'SERVER_TIME'), value: dateStr, inline: true }
+                    )
             } else {
                 userDailyLog = JSON.parse(userDailyLog[0].log);
                 userDailyLog = getLast(userDailyLog, 10);
@@ -104,18 +107,16 @@ module.exports = {
                     .setColor("0xfafafa")
                     .setTitle(`${interaction.user.username}'s ${interaction.client.getWordLanguage(serverSettings.lang, 'TIMELINE')}`)
                     .setDescription(`${interaction.client.getWordLanguage(serverSettings.lang, 'LAST_10_LOGS')}\n\`\`\`css\n${log}\`\`\``)
-                    .addField(interaction.client.getWordLanguage(serverSettings.lang, 'PLAYING_FOR').format(interaction.client.user.username), `\`${msToTime(elapsedTimeFromTaskStarted)}\``, true)
-                    .addField(interaction.client.getWordLanguage(serverSettings.lang, "SERVER_TIME"), dateStr, true);
+                    .addFields(
+                        { name: interaction.client.getWordLanguage(serverSettings.lang, 'PLAYING_FOR').format(interaction.client.user.username), value: `\`${msToTime(elapsedTimeFromTaskStarted)}\``, inline: true },
+                        { name: interaction.client.getWordLanguage(serverSettings.lang, 'SERVER_TIME'), value: dateStr, inline: true }
+                    )
             }
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }

@@ -81,6 +81,7 @@ module.exports = {
                 return interaction.client.getWordLanguage(serverSettings.lang, 'AVAILABLE');
             }
         }
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             var todayDate = new Date();
             var userCDData = await interaction.client.databaseSelectData("select * from user_cd where user_id = ?", [interaction.user.id]);
@@ -115,7 +116,7 @@ module.exports = {
             if (interaction.options.getSubcommand() === "info") {
                 let questData = await interaction.client.databaseSelectData("select * from created_quest where user_id =?", [interaction.user.id]);
                 if (questData[0] === undefined) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_NF'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_NF'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
                 } else {
                     questData = questData[0];
                     let txtToDo = "⦿ ";
@@ -129,19 +130,23 @@ module.exports = {
                     let embed;
                     if (completed) {
                         embed = new MessageEmbed()
-                            .setAuthor(`${interaction.user.username} ${interaction.client.getWordLanguage(serverSettings.lang, "QUEST_COMPLETED")}`, interaction.user.avatarURL())
-                            .addField(interaction.client.getWordLanguage(serverSettings.lang, "QUEST_INFO"), interaction.client.getWordLanguage(serverSettings.lang, "QUEST_COMPLETED_INFO").format(questData.type, questData.gold, questData.exp))
+                            .setAuthor({ name: `${interaction.user.username} ${interaction.client.getWordLanguage(serverSettings.lang, "QUEST_COMPLETED")}`, iconURL: interaction.user.avatarURL() })
+                            .addFields(
+                                { name: interaction.client.getWordLanguage(serverSettings.lang, "QUEST_INFO"), value: interaction.client.getWordLanguage(serverSettings.lang, "QUEST_COMPLETED_INFO").format(questData.type, questData.gold, questData.exp) }
+                            )
                             .setColor('#0x14e188')
                             .setThumbnail("https://i.imgur.com/RBt8b5B.gif");
                     } else {
                         embed = new MessageEmbed()
-                            .setAuthor(`${interaction.user.username} ${interaction.client.getWordLanguage(serverSettings.lang, "QUEST")}`, interaction.user.avatarURL())
-                            .addField(interaction.client.getWordLanguage(serverSettings.lang, "QUEST_INFO"), interaction.client.getWordLanguage(serverSettings.lang, "QUEST_FULL_INFO").format(questData.type, questData.gold, questData.exp, txtToDo, msToTime(interaction.client.strToDate(questData.date) - todayDate.getTime())))
+                            .setAuthor({ name: `${interaction.user.username} ${interaction.client.getWordLanguage(serverSettings.lang, "QUEST")}`, iconURL: interaction.user.avatarURL() })
+                            .addFields(
+                                { name: interaction.client.getWordLanguage(serverSettings.lang, "QUEST_INFO"), value: interaction.client.getWordLanguage(serverSettings.lang, "QUEST_FULL_INFO").format(questData.type, questData.gold, questData.exp, txtToDo, msToTime(interaction.client.strToDate(questData.date) - todayDate.getTime())) }
+                            )
                             .setColor('#0xffff00')
                             .setThumbnail("https://i.imgur.com/RBt8b5B.gif");
                     }
-                    embed.setFooter(millLeft)
-                    return await interaction.reply({ embeds: [embed] })
+                    embed.setFooter({ text: millLeft });
+                    return await interaction.editReply({ embeds: [embed] })
                 }
             } else if (interaction.options.getSubcommand() === "new") {
                 if (millLeft === interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_NEW_IN_A')) {
@@ -162,9 +167,9 @@ module.exports = {
                     })
                         .then(response => response.text())
                         .then(data => { return data });
-                    return await interaction.reply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_NEW_CREATED'))] });
+                    return await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_NEW_CREATED'))] });
                 } else {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(millLeft, interaction.client.getWordLanguage(serverSettings.lang, 'COMMAND_CD_TITLE'))] });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(millLeft, interaction.client.getWordLanguage(serverSettings.lang, 'COMMAND_CD_TITLE'))] });
                 }
             } else if (interaction.options.getSubcommand() === "board") {
                 let searchById = interaction.options.getNumber("id");
@@ -177,7 +182,7 @@ module.exports = {
                 }
 
                 if (questsData[0] === undefined) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_NF_ID'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_NF_ID'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
                 }
 
                 for (let i = 0; i < questsData.length; i++) {
@@ -187,32 +192,29 @@ module.exports = {
 
                 var embed = interaction.client.bluePagesEmbed(pagginateData[0], interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_BOARD_TITLE'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages));
                 if (maxPages > 1) {
-                    await interaction.reply({ embeds: [embed], components: [row] });
-                    buttonHandler(userInfo, interaction, serverSettings, pagginateData, questsData);
+                    await interaction.editReply({ embeds: [embed], components: [row] });
+                    buttonHandler(userInfo, interaction, serverSettings, pagginateData, questsData, msg);
                 } else {
-                    await interaction.reply({ embeds: [embed], components: [rowBuy] });
+                    await interaction.editReply({ embeds: [embed], components: [rowBuy] });
                 }
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
 
-function buttonHandler(userInfo, interaction, serverSettings, pagginateData, questsData) {
+function buttonHandler(userInfo, interaction, serverSettings, pagginateData, questsData, msg) {
     let index = 0;
     var maxPages = pagginateData.length - 1;
 
-    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
-
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
+        i.deferUpdate();
+        if (i.user.id !== interaction.user.id) return;
+
         if (["left", "right"].includes(i.customId)) {
             collector.resetTimer({ time: 15000 });
             if (i.customId === 'left')
@@ -224,10 +226,10 @@ function buttonHandler(userInfo, interaction, serverSettings, pagginateData, que
             if (index < 0)
                 index = maxPages;
             var embed = interaction.client.bluePagesEmbed(pagginateData[index], interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_BOARD_TITLE'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1));
-            await i.update({ embeds: [embed], components: [row] });
+            await interaction.editReply({ embeds: [embed], components: [row] });
         } else if (i.customId === 'buy') {
             if (userInfo.honor < questsData[index].honor) {
-                return await i.update({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_HONOR').format(questsData[index].honor), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], components: [] });
+                return await interaction.followUp({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_HONOR').format(questsData[index].honor), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
             } else {
                 await interaction.client.databaseEditData("update users set honor = honor - ? where user_id = ?", [questsData[index].honor, interaction.user.id])
                 await interaction.client.databaseEditData("delete from created_quest where user_id = ?", [interaction.user.id])
@@ -242,7 +244,7 @@ function buttonHandler(userInfo, interaction, serverSettings, pagginateData, que
                     ("00" + tempDate.getMinutes()).slice(-2) + ":" +
                     ("00" + tempDate.getSeconds()).slice(-2);
                 await interaction.client.databaseEditData("insert into created_quest (user_id, type, todo, gold, exp, date) values (?, ?, ?, ?, ?, ?)", [interaction.user.id, questsData[index].type, questsData[index].todo, questsData[index].gold, questsData[index].exp, dateStr]);
-                return await i.update({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_BOUGHT'))], components: [] });
+                return await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'QUEST_BOUGHT'))], components: [] });
             }
         }
 

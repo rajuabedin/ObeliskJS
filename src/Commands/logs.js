@@ -72,10 +72,11 @@ module.exports = {
                 return 0;
             }
         }
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             let userDailyLog = await interaction.client.databaseSelectData("select * from user_daily_logs where user_id = ? and DATE(log_date) = CURDATE()", [interaction.user.id]);
             if (userDailyLog.length == 0) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'NO_DATA'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'NO_DATA'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
             }
             userDailyLog = JSON.parse(userDailyLog[0].log);
             var itemsPerPage = 10;
@@ -96,31 +97,27 @@ module.exports = {
 
             var embed = interaction.client.bluePagesEmbed(logPage[0], "Logs", interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages));
             if (maxPages > 1) {
-                await interaction.reply({ embeds: [embed], components: [row] });
-                buttonHandler(userInfo, interaction, serverSettings, logPage);
+                await interaction.editReply({ embeds: [embed], components: [row] });
+                buttonHandler(userInfo, interaction, serverSettings, logPage, msg);
             } else {
-                await interaction.reply({ embeds: [embed] });
+                await interaction.editReply({ embeds: [embed] });
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
 
-function buttonHandler(userInfo, interaction, serverSettings, userLogs) {
+function buttonHandler(userInfo, interaction, serverSettings, userLogs, msg) {
     let index = 0;
     var maxPages = userLogs.length - 1;
 
-    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
 
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
+        if (i.user.id !== interaction.user.id) return;
         collector.resetTimer({ time: 15000 });
         if (i.customId === 'left')
             index--;
@@ -131,7 +128,7 @@ function buttonHandler(userInfo, interaction, serverSettings, userLogs) {
         if (index < 0)
             index = maxPages;
         var embed = interaction.client.bluePagesEmbed(userLogs[index], "Logs", interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1));
-        await i.update({ embeds: [embed], components: [row] });
+        await interaction.editReply({ embeds: [embed], components: [row] });
     });
 
     collector.on('end', collected => {

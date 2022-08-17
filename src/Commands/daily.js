@@ -10,7 +10,7 @@ module.exports = {
         .setDescription('This command lets you get your daily rewards.'),
 
     async execute(interaction, userInfo, serverSettings) {
-
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             String.prototype.format = function () {
                 var i = 0, args = arguments;
@@ -85,7 +85,7 @@ module.exports = {
                 dayPassedSinceLast = msToDays(elapsedTimeFromHunt * (-1));
                 // check remaining time 
                 if (elapsedTimeFromHunt > 0) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "DAILY_REWARD_NEXT").format(" `" + (msToTime(elapsedTimeFromHunt) + "`"), "https://www.patreon.com/obelisk_rpg1"), interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_T").format("Daily"))], ephemeral: true });;
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "DAILY_REWARD_NEXT").format(" `" + (msToTime(elapsedTimeFromHunt) + "`"), "https://www.patreon.com/obelisk_rpg1"), interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CD_T").format("Daily"))], ephemeral: true });;
                 }
             }
 
@@ -156,15 +156,11 @@ module.exports = {
                 ("00" + tomorrow.getSeconds()).slice(-2);
 
             await interaction.client.databaseEditData("update daily set daily_stack = ?, date = ? WHERE user_id = ?", [multiplier, dateStr, interaction.user.id])
-            await interaction.reply({ embeds: [interaction.client.greenEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, 'DAILY_REWARD_GOLD').format(rewards, multiplier), interaction.client.getWordLanguage(serverSettings.lang, 'DAILY_REWARD'), interaction.user)] })
+            await interaction.editReply({ embeds: [interaction.client.greenEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, 'DAILY_REWARD_GOLD').format(rewards, multiplier), interaction.client.getWordLanguage(serverSettings.lang, 'DAILY_REWARD'), interaction.user)] })
 
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
@@ -175,7 +171,7 @@ async function getUserInfoBooster(userId) {
         user_id: userId
     }
 
-    var data = await fetch(`http://localhost:5000/DMAPI/get_user`, {
+    var data = await fetch(`https://api.obelisk.club/DMAPI/get_user`, {
         method: 'POST',
         headers: {
             'x-api-key': process.env.API_KEY,
@@ -197,7 +193,7 @@ async function getUserInfoDonator(userId) {
         user_id: userId
     }
 
-    var data = await fetch(`http://localhost:5000/DMAPI/get_user`, {
+    var data = await fetch(`https://api.obelisk.club/DMAPI/get_user`, {
         method: 'POST',
         headers: {
             'x-api-key': process.env.API_KEY,

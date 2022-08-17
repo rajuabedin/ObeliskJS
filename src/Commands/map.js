@@ -22,6 +22,7 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             if (interaction.options.getInteger('check') === null && interaction.options.getInteger('teleport') === null) {
                 let mapData = await interaction.client.databaseSelectData("SELECT * FROM area where visible = 'true' ORDER BY id ASC");
@@ -64,16 +65,16 @@ module.exports = {
 
                 var embed = interaction.client.whitePagesImageBottomEmbed(mapList[0], interaction.client.getWordLanguage(serverSettings.lang, 'MAP_LIST'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages), "https://obelisk.club/npc/map.png");
                 if (maxPages > 1) {
-                    await interaction.reply({ embeds: [embed], components: [row] });
-                    buttonHandler(userInfo, interaction, serverSettings, mapList);
+                    await interaction.editReply({ embeds: [embed], components: [row] });
+                    buttonHandler(userInfo, interaction, serverSettings, mapList, msg);
                 } else {
-                    await interaction.reply({ embeds: [embed] });
+                    await interaction.editReply({ embeds: [embed] });
                 }
             } else if (interaction.options.getInteger('check') !== null) {
                 let mapData = await interaction.client.databaseSelectData("select * from area where id = ? and visible = 'true'", [interaction.options.getInteger('check')]);
                 // check if map is found
                 if (mapData.length === 0) {
-                    await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_NF'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                    await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_NF'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                     return;
                 } else {
                     mapData = mapData[0];
@@ -134,13 +135,13 @@ module.exports = {
                     **${interaction.client.getWordLanguage(serverSettings.lang, "AVAILABLE_DROPS")}:** \`\`\`[${availableMaterials}]\`\`\``)
                     .setImage("https://obelisk.club/npc/map.png")
 
-                await interaction.reply({ embeds: [embed] });
+                await interaction.editReply({ embeds: [embed] });
 
             } else {
                 let mapData = await interaction.client.databaseSelectData("select * from area where id = ? and visible = 'true'", [interaction.options.getInteger('teleport')]);
                 // check if map is found
                 if (mapData.length === 0) {
-                    await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_NF'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                    await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_NF'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                     return;
                 } else {
                     mapData = mapData[0];
@@ -148,35 +149,32 @@ module.exports = {
                 let userAvailableMaps = userInfo.areas.split(';');
                 if (userAvailableMaps.includes(mapData.tag.replaceAll('_', ' '))) {
                     if (mapData.tag.replaceAll('_', ' ') === userInfo.area_tag) {
-                        return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_ALREADY_ACTIVE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                        return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_ALREADY_ACTIVE'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                     }
                     let userInfoUpdate = await interaction.client.databaseEditData("update users set area_tag = ? where user_id = ?", [mapData.tag.replaceAll('_', ' '), interaction.user.id]);
-                    await interaction.reply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_CHANGE').format(`<@!${interaction.user.id}>`, mapData.name), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESS'))] });
+                    await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_CHANGE').format(`<@!${interaction.user.id}>`, mapData.name), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESS'))] });
                 } else {
-                    await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_NO_ACCESS'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                    await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'MAP_NO_ACCESS'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                 }
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
 
 
-function buttonHandler(userInfo, interaction, serverSettings, mapList) {
+function buttonHandler(userInfo, interaction, serverSettings, mapList, msg) {
     let index = 0;
     var maxPages = mapList.length - 1;
 
-    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
-
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
+        i.deferUpdate();
+        if (i.user.id !== interaction.user.id) return;
+
         collector.resetTimer({ time: 15000 });
         if (i.customId === 'left')
             index--;
@@ -187,7 +185,7 @@ function buttonHandler(userInfo, interaction, serverSettings, mapList) {
         if (index < 0)
             index = maxPages;
         var embed = interaction.client.whitePagesImageBottomEmbed(mapList[index], interaction.client.getWordLanguage(serverSettings.lang, 'MAP_LIST'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1), "https://obelisk.club/npc/map.png");
-        await i.update({ embeds: [embed], components: [row] });
+        await interaction.editReply({ embeds: [embed], components: [row] });
     });
 
     collector.on('end', collected => {

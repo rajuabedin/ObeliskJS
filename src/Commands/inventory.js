@@ -24,6 +24,7 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
 
             function paginate(arr, size) {
@@ -44,7 +45,7 @@ module.exports = {
             if (searchName === null && orderBy === null) {
                 userInventory = await interaction.client.databaseSelectData("select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and user_inventory.item_name != 'Aurora' order by id ASC", [interaction.user.id])
             } else if (searchName !== null && orderBy === null) {
-                userInventory = await interaction.client.databaseSelectData("select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and (user_inventory.item_name like ?) or (items.desc like ?) and user_inventory.item_name != 'Aurora' order by id ASC", [interaction.user.id, "%" + searchName + "%", "%" + searchName + "%"])
+                userInventory = await interaction.client.databaseSelectData("select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and ((user_inventory.item_name like ?) or (items.desc like ?)) and user_inventory.item_name != 'Aurora' order by id ASC", [interaction.user.id, "%" + searchName + "%", "%" + searchName + "%"])
             } else if (searchName === null && orderBy !== null) {
                 if (orderBy === "quantity") {
                     userInventory = await interaction.client.databaseSelectData(`select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and user_inventory.item_name != 'Aurora' order by user_inventory.${orderBy} DESC`, [interaction.user.id])
@@ -52,13 +53,13 @@ module.exports = {
                     userInventory = await interaction.client.databaseSelectData(`select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and user_inventory.item_name != 'Aurora' order by user_inventory.${orderBy} ASC`, [interaction.user.id])
                 }
             } else {
-                userInventory = await interaction.client.databaseSelectData(`select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and (user_inventory.item_name like ?) or (items.desc like ?) and user_inventory.item_name != 'Aurora' order by user_inventory.${orderBy} ASC`, [interaction.user.id, "%" + searchName + "%", "%" + searchName + "%"])
+                userInventory = await interaction.client.databaseSelectData(`select user_inventory.item_name, user_inventory.quantity, items.id, items.desc, items.type, items.value from user_inventory inner join items on user_inventory.item_name = items.name where user_inventory.user_id = ? and ((user_inventory.item_name like ?) or (items.desc like ?)) and user_inventory.item_name != 'Aurora' order by user_inventory.${orderBy} ASC`, [interaction.user.id, "%" + searchName + "%", "%" + searchName + "%"])
             }
 
             if (userInventory[0] === undefined && searchName === null) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'INVENTORY_EMPTY'))] });
+                return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'INVENTORY_EMPTY'))] });
             } else if (userInventory[0] === undefined && searchName !== null) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SHOP_NF_NAME').format(searchName))] });
+                return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SHOP_NF_NAME').format(searchName))] });
             } else {
                 auroraValue = await interaction.client.databaseSelectData("select * from user_inventory where user_id = ? and item_name = ?", [interaction.user.id, "Aurora"])
                 if (auroraValue[0] !== undefined) {
@@ -88,33 +89,32 @@ module.exports = {
 
                 var embed = interaction.client.bluePagesEmbed(userInventory[0], interaction.client.getWordLanguage(serverSettings.lang, 'INVENTORY'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages));
                 if (maxPages > 1) {
-                    await interaction.reply({ embeds: [embed], components: [row] });
-                    buttonHandler(userInfo, interaction, serverSettings, userInventory);
+                    await interaction.editReply({ embeds: [embed], components: [row] });
+                    buttonHandler(userInfo, interaction, serverSettings, userInventory, msg);
                 } else {
-                    await interaction.reply({ embeds: [embed] });
+                    await interaction.editReply({ embeds: [embed] });
                 }
 
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
 
-function buttonHandler(userInfo, interaction, serverSettings, userInventory) {
+function buttonHandler(userInfo, interaction, serverSettings, userInventory, msg) {
     let index = 0;
     var maxPages = userInventory.length - 1;
 
-    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
 
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
+        i.deferUpdate();
+        if (i.user.id != interaction.user.id) {
+            return;
+        }
         collector.resetTimer({ time: 15000 });
         if (i.customId === 'left')
             index--;
@@ -125,7 +125,7 @@ function buttonHandler(userInfo, interaction, serverSettings, userInventory) {
         if (index < 0)
             index = maxPages;
         var embed = interaction.client.bluePagesEmbed(userInventory[index], interaction.client.getWordLanguage(serverSettings.lang, 'INVENTORY'), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1));
-        await i.update({ embeds: [embed], components: [row] });
+        await interaction.editReply({ embeds: [embed], components: [row] });
     });
 
     collector.on('end', collected => {

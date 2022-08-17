@@ -56,6 +56,7 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             function nFormatterNumberToString(num, digits) {
                 var si = [
@@ -135,9 +136,9 @@ module.exports = {
                 }
 
                 if (userSkinInventory[0] === undefined && searchName === null) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_EMPTY'))] });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_EMPTY'))] });
                 } else if (userSkinInventory[0] === undefined && searchName !== null) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NF_NAME').format(searchName))] });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NF_NAME').format(searchName))] });
                 } else {
                     var itemsPerPage = 4;
                     var newInventory = [];
@@ -161,10 +162,10 @@ module.exports = {
 
                     var embed = interaction.client.bluePagesEmbed(userSkinInventory[0], interaction.client.getWordLanguage(serverSettings.lang, 'S_INVENTORY').format("Skins"), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(1, maxPages));
                     if (maxPages > 1) {
-                        await interaction.reply({ embeds: [embed], components: [row] });
-                        buttonHandler(userInfo, interaction, serverSettings, userSkinInventory);
+                        await interaction.editReply({ embeds: [embed], components: [row] });
+                        buttonHandler(userInfo, interaction, serverSettings, userSkinInventory, msg);
                     } else {
-                        await interaction.reply({ embeds: [embed] });
+                        await interaction.editReply({ embeds: [embed] });
                     }
 
                 }
@@ -172,7 +173,7 @@ module.exports = {
                 var skinInventory = await interaction.client.databaseSelectData("select * from user_skins where user_id = ? and skin_name = ?", [interaction.user.id, interaction.options.getString('name')])
 
                 if (skinInventory[0] === undefined || skinInventory[0].quantity < 1) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
                 } else {
                     skinInventory = skinInventory[0];
                     await userDailyLogger(interaction, interaction.user, "skins", `Changed profile theme to [${skinInventory.skin_name}]`)
@@ -189,18 +190,18 @@ module.exports = {
                         await interaction.client.databaseEditData(`insert into user_skins (user_id, skin_name, quantity) values (?, ?,?) ON DUPLICATE KEY update quantity = quantity + ?`, [interaction.user.id, userInfo.selected_bg, 1, 1]);
                         await userDailyLogger(interaction, interaction.user, "skins", `Skins [${userInfo.selected_bg}] added back to your skin inventory`);
                     }
-                    return await interaction.reply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_CHANGED').format(userInfo.selected_bg, interaction.options.getString('name').toUpperCase()), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESSFUL'))] })
+                    return await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_CHANGED').format(userInfo.selected_bg, interaction.options.getString('name').toUpperCase()), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESSFUL'))] })
                 }
             } else if (interaction.options.getSubcommand() === "trade") {
                 var skinData = await interaction.client.databaseSelectData("SELECT user_skins.skin_name, user_skins.quantity, bg_info.id, bg_info.tradable, bg_info.bg_format from user_skins INNER join bg_info on user_skins.skin_name = bg_info.file_name where user_skins.user_id = ? and user_skins.skin_name = ?", [interaction.user.id, interaction.options.getString('name').toUpperCase()])
 
                 if (skinData[0] === undefined || skinData[0].quantity < 1) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
                 } else {
                     skinData = skinData[0];
 
                     if (skinData.tradable.toLowerCase() === "no") {
-                        return interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_BLOCK'))] })
+                        return interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_BLOCK'))] })
                     }
 
                     var tradeUser = interaction.options.getUser('user');
@@ -210,7 +211,7 @@ module.exports = {
 
                     let tradeUserData = await interaction.client.databaseSelectData("SELECT gold, user_id from users where user_id = ?", [tradeUser.id]);
                     if (tradeUserData[0] === undefined) {
-                        return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_ACC_FOUND'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
+                        return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NO_ACC_FOUND'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
                     } else {
                         tradeUserData = tradeUserData[0];
                     }
@@ -225,11 +226,11 @@ module.exports = {
                     } else {
                         tradeSkinData = await interaction.client.databaseSelectData("SELECT user_skins.skin_name, user_skins.quantity, bg_info.id, bg_info.tradable, bg_info.bg_format from user_skins INNER join bg_info on user_skins.skin_name = bg_info.file_name where user_skins.user_id = ? and user_skins.skin_name = ?", [tradeUser.id, value.toUpperCase()]);
                         if (tradeSkinData[0] === undefined || tradeSkinData[0].quantity < 1) {
-                            return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO_TRADE').format(tradeUser.username), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
+                            return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO_TRADE').format(tradeUser.username), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
                         } else {
                             tradeSkinData = tradeSkinData[0];
                             if (tradeSkinData.tradable.toLowerCase() === "no") {
-                                return interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_BLOCK'))] })
+                                return interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_BLOCK'))] })
                             } else {
                                 userDailyLogger(interaction, interaction.user, "skins", `Trading [${skinData.skin_name}] to ${tradeUser.username} for [${tradeSkinData.skin_name}]`);
                             }
@@ -237,14 +238,14 @@ module.exports = {
                     }
 
                     if (tradeUser.id === interaction.user.id || tryingToBeAMonke) {
-                        return interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_MONKEY'))] })
+                        return interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_MONKEY'))] })
                     }
 
 
 
                     var tradeOfferEmbed = new MessageEmbed()
                         .setColor('0xffff00')
-                        .setAuthor(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_TITLE').format(skinData.skin_name), interaction.user.avatarURL())
+                        .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_TITLE').format(skinData.skin_name), iconURL: interaction.user.avatarURL() })
                         .setDescription(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE')
                             .format(`<@${interaction.user.id}>`,
                                 skinData.skin_name,
@@ -253,13 +254,16 @@ module.exports = {
                                 ((interaction.options.getString('trade_for').toLowerCase() === "skin") ? `https://obelisk.club/skins.html#atvImg__${tradeSkinData.id}` : '`https://obelisk.club'),
                                 interaction.options.getString('trade_for').toLowerCase()))
 
-                    await interaction.reply({ embeds: [tradeOfferEmbed], components: [rowTrade], content: `<@${tradeUser.id}>` })
+                    await interaction.editReply({ embeds: [tradeOfferEmbed], components: [rowTrade], content: `<@${tradeUser.id}>` })
 
-                    const filter = i => i.user.id === tradeUser.id && i.message.interaction.id === interaction.id;
 
-                    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 20000 });
+                    const collector = msg.createMessageComponentCollector({ time: 20000 });
 
                     collector.on('collect', async i => {
+                        i.deferUpdate();
+                        if (i.user.id != interaction.user.id) {
+                            return;
+                        }
                         if (i.customId === 'yes') {
                             if (interaction.options.getString('trade_for').toLowerCase() === "gold" && value <= tradeUserData.gold) {
                                 await interaction.client.databaseEditData(`update users set gold = gold + ? where user_id = ?`, [value, interaction.user.id]);
@@ -268,9 +272,9 @@ module.exports = {
                                 await interaction.client.databaseEditData(`insert into user_skins (user_id, skin_name, quantity) values (?, ?,1) ON DUPLICATE KEY update quantity = quantity + 1`, [tradeUser.id, skinData.skin_name]);
                                 await userDailyLogger(interaction, tradeUser, "skins", `Traded [${value} gold] for [${skinData.skin_name}] to ${interaction.user.username}`);
                                 await userDailyLogger(interaction, interaction.user, "skins", `Traded [${skinData.skin_name}] for [${value} gold] to ${tradeUser.username}`);
-                                await i.update({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_SUC'), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESSFUL'))] })
+                                await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_SUC'), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESSFUL'))] })
                             } else {
-                                await i.update({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO_TRADE_GOLD').format(`<@${tradeUser.id}>`, value), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
+                                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO_TRADE_GOLD').format(`<@${tradeUser.id}>`, value), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
                                 await userDailyLogger(interaction, interaction.user, "skins", `Traded cancelled ${tradeUser.username} does not have enough gold`);
                             }
 
@@ -282,7 +286,7 @@ module.exports = {
                                 await interaction.client.databaseEditData(`insert into user_skins (user_id, skin_name, quantity) values (?, ?,1) ON DUPLICATE KEY update quantity = quantity + 1`, [interaction.user.id, tradeSkinData.skin_name]);
                                 await userDailyLogger(interaction, interaction.user, "skins", `Traded [${skinData.skin_name}] for [${tradeSkinData.skin_name}] to ${tradeUser.username}`);
                                 await userDailyLogger(interaction, tradeUser, "skins", `Traded [${tradeSkinData.skin_name}] for [${skinData.skin_name}] to ${tradeUser.username}`);
-                                await i.update({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_SUC'), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESSFUL'))] })
+                                await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_SUC'), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESSFUL'))] })
                             }
 
                             collector.stop();
@@ -301,26 +305,24 @@ module.exports = {
             }
 
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName, 'sub_command': interaction.options.getSubcommand() });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
 
 
-function buttonHandler(userInfo, interaction, serverSettings, userSkinInventory) {
+function buttonHandler(userInfo, interaction, serverSettings, userSkinInventory, msg) {
     let index = 0;
     var maxPages = userSkinInventory.length - 1;
 
-    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
-
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
+        i.deferUpdate();
+        if (i.user.id != interaction.user.id) {
+            return;
+        }
         collector.resetTimer({ time: 15000 });
         if (i.customId === 'left')
             index--;
@@ -331,7 +333,7 @@ function buttonHandler(userInfo, interaction, serverSettings, userSkinInventory)
         if (index < 0)
             index = maxPages;
         var embed = interaction.client.bluePagesEmbed(userSkinInventory[index], interaction.client.getWordLanguage(serverSettings.lang, 'S_INVENTORY').format("Skins"), interaction.user, interaction.client.getWordLanguage(serverSettings.lang, 'PAGES').format(index + 1, maxPages + 1));
-        await i.update({ embeds: [embed], components: [row] });
+        await interaction.editReply({ embeds: [embed], components: [row] });
     });
 
     collector.on('end', collected => {

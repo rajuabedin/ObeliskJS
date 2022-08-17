@@ -24,7 +24,7 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
-
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             function nFormatterNumberToString(num, digits) {
                 var si = [
@@ -79,7 +79,7 @@ module.exports = {
             } else {
                 quantity = nFormatterStringToNumber(quantity);
                 if (quantity == "error" || quantity < 1) {
-                    return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_TRADE_QUANTITY'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_TRADE_QUANTITY'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
                 }
             }
             if (id !== null && name === null) {
@@ -87,34 +87,30 @@ module.exports = {
             } else if (id === null && name !== null) {
                 var shopItemInfo = await interaction.client.databaseSelectData("select shop.item_id, shop.price, shop.currency, items.name from shop inner join items on shop.item_id = items.id where items.name = ?", [name.replaceAll(" ", "_")]);
             } else {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_BUY_ID_NAME'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_BUY_ID_NAME'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
             }
 
             if (shopItemInfo[0] === undefined) {
-                return await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_ITEM_NF'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
+                return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_ITEM_NF'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
             } else {
                 shopItemInfo = shopItemInfo[0];
-                await interaction.reply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'BUY_MONKEY').format(quantity, shopItemInfo.name.replaceAll("_", " "), "https://obelisk.club/", shopItemInfo.price * quantity, icons[shopItemInfo.currency]), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION'))], components: [rowYesNo] });
+                await interaction.editReply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'BUY_MONKEY').format(quantity, shopItemInfo.name.replaceAll("_", " "), "https://obelisk.club/", shopItemInfo.price * quantity, icons[shopItemInfo.currency]), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION'))], components: [rowYesNo] });
                 buttonHandler(interaction, serverSettings, shopItemInfo, quantity)
             }
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
-function buttonHandler(interaction, serverSettings, shopItemInfo, quantity) {
+function buttonHandler(interaction, serverSettings, shopItemInfo, quantity, msg) {
     var bought = false;
 
-    const filter = i => i.user.id === interaction.user.id && i.message.interaction.id === interaction.id;
-
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
+        i.deferUpdate();
+        if (i.user.id !== interaction.user.id) return;
         if (i.customId === 'no') {
             collector.stop();
             return interaction.editReply({ components: [], embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "COMMAND_CANCELLED"))] })

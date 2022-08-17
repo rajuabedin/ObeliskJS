@@ -16,6 +16,7 @@ module.exports = {
                 return typeof args[i] != 'undefined' ? args[i++] : '';
             });
         };
+        let msg = await interaction.deferReply({ fetchReply: true });
         try {
             let bankBalance = 0;
             let bankInfo = await interaction.client.databaseSelectData("select * from bank where user_id = ?", [userInfo.user_id]);
@@ -32,19 +33,15 @@ module.exports = {
 
             let embed = new MessageEmbed()
                 .setColor('0x009dff')
-                .setAuthor(`${interaction.client.getWordLanguage(serverSettings.lang, 'BANK_ACC_BALANCE').format(interaction.user.username)}`)
+                .setAuthor({ name: interaction.client.getWordLanguage(serverSettings.lang, 'BANK_ACC_BALANCE').format(interaction.user.username) })
                 .setThumbnail(interaction.user.avatarURL())
                 .setDescription(interaction.client.getWordLanguage(serverSettings.lang, 'BALANCE').format(auroraBalance, bankBalance, userInfo.level * 1000, userInfo.gold))
                 .setTimestamp()
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
         } catch (error) {
-            if (interaction.replied) {
-                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            } else {
-                await interaction.reply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
-            }
-            errorLog.error(error.message, { 'command_name': interaction.commandName });
+            let errorID = await errorLog.error(error, interaction);
+            await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
         }
     }
 }
