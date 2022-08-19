@@ -14,8 +14,10 @@ module.exports = {
             .addStringOption(option => option
                 .setName('order')
                 .setDescription("Order your inventory")
-                .addChoice("name", "file_name")
-                .addChoice("quantity", "quantity"))
+                .addChoices(
+                    { name: 'Name', value: 'file_name' },
+                    { name: 'Quantity', value: 'quantity' }
+                ))
             .addStringOption(option => option
                 .setName("search")
                 .setDescription("Search item by name"))
@@ -36,17 +38,19 @@ module.exports = {
                 .setRequired(true))
             .addUserOption(option => option
                 .setName('user', 'user')
-                .setDescription("Mentione the user that you want to start a trade")
+                .setDescription("Mention the user that you want to start a trade")
                 .setRequired(true))
             .addStringOption(option => option
                 .setName("trade_for", "trade_for")
                 .setDescription("What you want to trade for")
-                .addChoice("gold", "gold")
-                .addChoice("skin", "skin")
+                .addChoices(
+                    { name: 'Gold', value: 'gold' },
+                    { name: 'Skin', value: 'skin' }
+                )
                 .setRequired(true))
             .addStringOption(option => option
                 .setName("value", "value")
-                .setDescription("Value to recieve")
+                .setDescription("Value to receive")
                 .setRequired(true))),
 
     async execute(interaction, userInfo, serverSettings) {
@@ -260,7 +264,7 @@ module.exports = {
                     const collector = msg.createMessageComponentCollector({ time: 20000 });
 
                     collector.on('collect', async i => {
-                        i.deferUpdate();
+                        await i.defferUpdate();
                         if (i.user.id != interaction.user.id) {
                             return;
                         }
@@ -319,7 +323,7 @@ function buttonHandler(userInfo, interaction, serverSettings, userSkinInventory,
     const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
-        i.deferUpdate();
+        await i.defferUpdate();
         if (i.user.id != interaction.user.id) {
             return;
         }

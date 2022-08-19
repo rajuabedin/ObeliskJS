@@ -212,7 +212,7 @@ function buttonHandler(userInfo, interaction, serverSettings, pagginateData, que
     const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
-        i.deferUpdate();
+        await i.defferUpdate();
         if (i.user.id !== interaction.user.id) return;
 
         if (["left", "right"].includes(i.customId)) {

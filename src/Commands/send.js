@@ -18,8 +18,11 @@ module.exports = {
             .setName('type')
             .setDescription('The type of item you want to send')
             .setRequired(true)
-            .addChoice('gold', 'gold')
-            .addChoice('item', 'item'))
+            .addChoices(
+                { name: "Gold", value: "gold" },
+                { name: "Item", value: "item" }
+            )
+        )
         .addStringOption(option => option
             .setName('quantity')
             .setDescription('The amount of gold/item you want to send')
@@ -107,7 +110,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id !== interaction.user.id) return;
 
                     if (i.customId === "yes") {
@@ -208,7 +211,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id !== interaction.user.id) return;
                     if (i.customId === "yes") {
                         continueCode = true;

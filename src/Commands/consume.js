@@ -14,9 +14,11 @@ module.exports = {
             .setName('type')
             .setDescription('Type of potion to consume.')
             .setRequired(true)
-            .addChoice('hp', 'hp')
-            .addChoice('mp', 'mp')
-            .addChoice('both', 'both'))
+            .addChoices(
+                { name: 'hp', value: 'hp' },
+                { name: 'mp', value: 'mp' },
+                { name: 'both', value: 'both' }
+            ))
         .addStringOption(option => option
             .setName('amount')
             .setDescription('Amount of potions to consume.')),

@@ -14,8 +14,10 @@ module.exports = {
             .addStringOption(option => option
                 .setName('order')
                 .setDescription("Order your inventory")
-                .addChoice("name", "file_name")
-                .addChoice("quantity", "quantity"))
+                .addChoices(
+                    { name: 'Name', value: 'file_name' },
+                    { name: 'Quantity', value: 'quantity' }
+                ))
             .addStringOption(option => option
                 .setName("search")
                 .setDescription("Search item by name"))
@@ -186,7 +188,7 @@ function buttonHandler(userInfo, interaction, serverSettings, userBorderInventor
     const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
-        i.deferUpdate();
+        await i.defferUpdate();
         if (i.user.id !== interaction.user.id) return;
         collector.resetTimer({ time: 15000 });
         if (i.customId === 'left')

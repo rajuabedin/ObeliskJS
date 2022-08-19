@@ -11,7 +11,9 @@ module.exports = {
         .addStringOption(option =>
             option.setName('extras')
                 .setDescription('Hunt extras')
-                .addChoice('info', 'info')
+                .addChoices(
+                    { name: 'Info', value: 'info' }
+                )
                 .setRequired(false)),
 
     async execute(interaction, userInfo, serverSettings) {
@@ -112,7 +114,7 @@ module.exports = {
                         collector = msg.createMessageComponentCollector({ time: 15000 });
 
                         collector.on('collect', async i => {
-                            i.deferUpdate();
+                            await i.defferUpdate();
                             if (i.user.id !== interaction.user.id) return;
                             if (i.customId === "yes") {
                                 continueCode = true;
@@ -221,7 +223,7 @@ module.exports = {
                             str += parseInt(petStatData[1])
                         } else if (petStatData[0] === "dex") {
                             dex += parseInt(petStatData[1])
-                        } else if (petStatData[0] === "vit") {
+                        } else if (petStatData[0] === "def") {
                             vit += parseInt(petStatData[1])
                         } else if (petStatData[0] === "intel") {
                             intel += parseInt(petStatData[1])
@@ -424,6 +426,7 @@ module.exports = {
             continueCode = false;
 
             collector.on('collect', async i => {
+                i.defferUpdate();
                 if (i.user.id !== interaction.user.id) return;
                 if (i.customId === "attack") {
                     continueCode = true;

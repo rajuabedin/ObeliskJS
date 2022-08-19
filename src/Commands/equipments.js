@@ -17,8 +17,10 @@ module.exports = {
                 .setName('type')
                 .setDescription('Type of equipment to list.')
                 .setRequired(true)
-                .addChoice('armor', 'armor')
-                .addChoice('weapon', 'weapon')))
+                .addChoices(
+                    { name: 'Weapon', value: 'weapon' },
+                    { name: 'Armor', value: 'armor' },
+                )))
         .addSubcommand(subcommand => subcommand
             .setName('craft')
             .setDescription('Craft equipments. - Currently unavailable')),
@@ -81,7 +83,7 @@ function buttonHandler(userInfo, interaction, serverSettings, equipmentList, msg
     const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
-        i.deferUpdate();
+        await i.defferUpdate();
         if (i.user.id !== interaction.user.id) return;
         collector.resetTimer({ time: 15000 });
         if (i.customId === 'left')

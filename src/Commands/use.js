@@ -103,7 +103,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id !== interaction.user.id) return;
                     if (i.customId === "yes") {
                         continueCode = true;
@@ -144,7 +144,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id !== interaction.user.id) return;
                     if (i.customId === "yes") {
                         continueCode = true;
@@ -191,7 +191,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -228,7 +228,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -276,7 +276,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -348,7 +348,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -388,7 +388,7 @@ module.exports = {
                     collector = msg.createMessageComponentCollector({ time: 15000 });
                     awaitConfirmation = true;
                     collector.on('collect', async i => {
-                        i.deferUpdate();
+                        await i.defferUpdate();
                         if (i.user.id != interaction.user.id) {
                             return;
                         }
@@ -428,7 +428,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -502,7 +502,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -576,7 +576,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -654,7 +654,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -735,7 +735,7 @@ module.exports = {
                 collector = msg.createMessageComponentCollector({ time: 15000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    i.deferUpdate();
+                    await i.defferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }

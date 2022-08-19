@@ -139,7 +139,7 @@ module.exports = {
                         var array = [];
 
                         collector.on('collect', async i => {
-                            i.deferUpdate();
+                            await i.defferUpdate();
                             if (i.user.id !== interaction.user.id) return;
 
                             selected = true;

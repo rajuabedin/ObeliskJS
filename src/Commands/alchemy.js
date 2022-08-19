@@ -11,8 +11,10 @@ module.exports = {
         .addStringOption(option => option
             .setName('order')
             .setDescription("Order alchemy recipes by...")
-            .addChoice("name", "material_name")
-            .addChoice("id", "id"))
+            .addChoices(
+                { name: 'Name', value: 'material_name' },
+                { name: 'ID', value: 'id' },
+            ))
         .addStringOption(option => option
             .setName("search")
             .setDescription("Search item by name or required material name")),
@@ -92,7 +94,7 @@ function buttonHandler(userInfo, interaction, serverSettings, alchemyData, msg) 
     const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
-        i.deferUpdate();
+        await i.defferUpdate();
         if (i.user.id != interaction.user.id) {
             return;
         }

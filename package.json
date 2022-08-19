@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/rajuabedin/ObeliskJS#readme",
   "dependencies": {
-    "@discordjs/builders": "^0.6.0",
+    "@discordjs/builders": "^0.15.0",
     "@discordjs/rest": "^0.1.0-canary.0",
     "canvas": "^2.8.0",
     "crypto": "^1.0.1",

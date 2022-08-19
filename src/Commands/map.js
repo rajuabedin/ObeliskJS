@@ -172,7 +172,7 @@ function buttonHandler(userInfo, interaction, serverSettings, mapList, msg) {
     const collector = msg.createMessageComponentCollector({ time: 15000 });
 
     collector.on('collect', async i => {
-        i.deferUpdate();
+        await i.defferUpdate();
         if (i.user.id !== interaction.user.id) return;
 
         collector.resetTimer({ time: 15000 });

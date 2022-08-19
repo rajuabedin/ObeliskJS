@@ -17,13 +17,15 @@ module.exports = {
             .addStringOption(option => option
                 .setName("stat")
                 .setDescription("Selecet where you want to allocate the point/s")
-                .addChoice("Agility", "agi")
-                .addChoice("Strength", "str")
-                .addChoice("Dexterity", "dex")
-                .addChoice("Vitality", "def")
-                .addChoice("Intelligence", "intel")
-                .addChoice("Critic", "crit")
-                .addChoice("Luck", "luck")
+                .addChoices(
+                    { name: "Strength", value: "str" },
+                    { name: "Vitality", value: "def" },
+                    { name: "Intelligence", value: "intel" },
+                    { name: "Dexterity", value: "dex" },
+                    { name: "Agility", value: "agi" },
+                    { name: "Luck", value: "luck" },
+                    { name: "Critic", value: "crit" }
+                )
                 .setRequired(true)
             )
             .addStringOption(option => option

@@ -19,15 +19,19 @@ module.exports = {
             .addStringOption(option => option
                 .setName('auction_type')
                 .setDescription('Type of auction!')
-                .addChoice("bidding", "bidding")
-                .addChoice("buyout", "buyout")
+                .addChoices(
+                    { name: 'Bidding', value: 'bidding' },
+                    { name: 'Buyout', value: 'buyout' }
+                )
                 .setRequired(true))
             .addStringOption(option => option
                 .setName('item_type')
                 .setDescription('Auction type!')
-                .addChoice("skin", "skin")
-                .addChoice("item", "item")
-                .addChoice("equipment", "equipment")
+                .addChoices(
+                    { name: 'Item', value: 'item' },
+                    { name: 'Skin', value: 'skin' },
+                    { name: "Equipment", value: "equipment" }
+                )
                 .setRequired(true))
             .addStringOption(option => option
                 .setName('id')

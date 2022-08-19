@@ -11,24 +11,30 @@ module.exports = {
         .addStringOption(option => option
             .setName('class')
             .setDescription('Choose your class')
-            .addChoice('Assassin', 'Assassin')
-            .addChoice('Warrior', 'Warrior')
-            .addChoice('Mage', 'Mage')
-            .addChoice('Tank', 'Tank')
+            .addChoices(
+                { name: 'Warrior', value: 'warrior' },
+                { name: 'Mage', value: 'mage' },
+                { name: 'Assassin', value: 'assassin' },
+                { name: 'Tank', value: 'tank' },
+            )
             .setRequired(true))
         .addStringOption(option => option
             .setName('race')
             .setDescription("Choose your player race")
-            .addChoice('Human', 'Human')
-            .addChoice('Giant', 'Giant')
-            .addChoice('Elf', 'Elf')
-            .addChoice('Orc', 'Orc')
+            .addChoices(
+                { name: "Human", value: "human" },
+                { name: "Giant", value: "giant" },
+                { name: "Elf", value: "elf" },
+                { name: "Orc", value: "orc" },
+            )
             .setRequired(true))
         .addStringOption(option => option
             .setName('gender')
             .setDescription("Choose your player gender")
-            .addChoice('Female', 'Female')
-            .addChoice('Male', 'Male')
+            .addChoices(
+                { name: "Female", value: "female" },
+                { name: "Male", value: "male" }
+            )
             .setRequired(true)),
 
     async execute(interaction, userInfo, serverSettings) {
@@ -49,6 +55,7 @@ module.exports = {
 
             collector = msg.createMessageComponentCollector({ time: 15000 });
             collector.on('collect', async i => {
+                i.defferUpdate();
                 if (i.user.id !== interaction.user.id) return;
                 if (i.customId === "yes") {
                     await interaction.client.databaseEditData("INSERT INTO users (user_id, username, class, gender, race, level, exp, gold) VALUES (?,?,?,?,?,?,?,?)",
