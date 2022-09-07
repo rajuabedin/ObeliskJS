@@ -36,7 +36,7 @@ module.exports = {
                     await interaction.client.databaseEditData("update users set username = ? where user_id = ?", [user.username, user.id]);
                 }
             } else {
-                if (secondUserData.username != user.username) {
+                if (selectedPlayerData.username != user.username) {
                     await interaction.client.databaseEditData("update users set username = ? where user_id = ?", [user.username, user.id]);
                 }
             }

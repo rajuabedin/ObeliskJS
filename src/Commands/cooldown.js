@@ -5,7 +5,7 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('cd')
-        .setDescription('Command to check all you command cooldown.'),
+        .setDescription('Command to check all your command cooldown.'),
 
     async execute(interaction, userInfo, serverSettings) {
         function msToTime(duration) {
@@ -21,15 +21,15 @@ module.exports = {
             seconds = (seconds < 10) ? "0" + seconds : seconds;
 
             if (days > 0) {
-                return days + "d " + hours + "h " + minutes + "m " + seconds + "s " + milliseconds + "ms ";
+                return days + "d " + hours + "h " + minutes + "m " + seconds + "s";
             } else if (hours > 0) {
-                return hours + "h " + minutes + "m " + seconds + "s " + milliseconds + "ms ";
+                return hours + "h " + minutes + "m " + seconds + "s";
             } else if (minutes > 0) {
-                return minutes + "m " + seconds + "s " + milliseconds + "ms ";
+                return minutes + "m " + seconds + "s";
             } else if (seconds > 0) {
-                return seconds + "s " + milliseconds + "ms ";
+                return seconds + "s " + milliseconds + "ms";
             } else if (milliseconds > 0) {
-                return milliseconds + "ms ";
+                return milliseconds + "ms";
             } else {
                 return "Ready";
             }

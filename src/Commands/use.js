@@ -4,12 +4,13 @@ const { MessageActionRow, MessageButton, MessageSelectMenu, MessageEmbed, Messag
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const userDailyLogger = require('../Utility/userDailyLogger');
 const fetch = require("node-fetch");
+const utility = require('../Utility/utils');
 require('dotenv').config();
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('use')
-        .setDescription('Use and item!')
+        .setDescription('Use an item!')
         .addStringOption(option => option
             .setName('id')
             .setRequired(true)
@@ -100,10 +101,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id !== interaction.user.id) return;
                     if (i.customId === "yes") {
                         continueCode = true;
@@ -141,10 +142,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id !== interaction.user.id) return;
                     if (i.customId === "yes") {
                         continueCode = true;
@@ -188,10 +189,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -225,10 +226,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -273,10 +274,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -345,10 +346,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -385,10 +386,10 @@ module.exports = {
                     continueCode = false;
                     await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'EQ_BOOSTED_P').format(equipmentInfo.boosted_by), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                    collector = msg.createMessageComponentCollector({ time: 15000 });
+                    collector = msg.createMessageComponentCollector({ time: 40000 });
                     awaitConfirmation = true;
                     collector.on('collect', async i => {
-                        await i.defferUpdate();
+                        await i.deferUpdate();
                         if (i.user.id != interaction.user.id) {
                             return;
                         }
@@ -425,10 +426,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -499,10 +500,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -573,10 +574,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -651,10 +652,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -732,10 +733,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION_USE').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id != interaction.user.id) {
                         return;
                     }
@@ -799,13 +800,209 @@ module.exports = {
 
                 await userDailyLogger(interaction, interaction.user, "use", `Found skin [${foundSkin}]`);
 
-            } else {
+            } else if (itemInfo.item_name == "Essential_Food") {
+                if (['none', '', null, 'null'].includes(userInfo.pet_id)) {
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'FAMILIAR_NOT_EQUIPPED'))] });
+                }
+
+                if (amount > 4) {
+                    return interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "USE_N_AT_A_TIME").format(4), interaction.client.getWordLanguage(serverSettings.lang, "ERROR"))] });
+                }
+
+                let petInfo = await interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id]);
+                petInfo = petInfo[0];
+                // check last feed timing
+                let lastFeed = utility.strToDate(userInfo.last_feed_time);
+
+                let now = new Date();
+
+                // check hour difference between now and last feed
+                let hourDiff = Math.abs(now - lastFeed) / 36e5;
+
+                if (hourDiff > 1) {
+                    petInfo.remaining_feed += hourDiff * 2;
+                }
+
+                if (petInfo.remaining_feed > 4) {
+                    petInfo.remaining_feed = 4;
+                }
+
+                // check amount greater than remaining feed
+                if (amount > petInfo.remaining_feed) {
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'FAMILIAR_NEXT_FEED').format(petInfo.remaining_feed, 2))] });
+                }
+
+                let newStamina = petInfo.stamina + amount * 30;
+
+                if (newStamina > petInfo.max_stamina) {
+                    newStamina = petInfo.max_stamina;
+                }
+
+                petInfo.remaining_feed -= amount;
+
+                await interaction.client.databaseEditData("update users_pet set last_feed_time = ?, stamina = ?, remaining_feed = ? where user_id = ? and pet_id = ?", [utility.dateToStr(now), newStamina, petInfo.remaining_feed, interaction.user.id, userInfo.pet_id]);
+                usedItem = true;
+            } else if (itemInfo.item_name == "Basic_Food") {
+                if (['none', '', null, 'null'].includes(userInfo.pet_id)) {
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'FAMILIAR_NOT_EQUIPPED'))] });
+                }
+
+                if (amount > 4) {
+                    return interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "USE_N_AT_A_TIME").format(4), interaction.client.getWordLanguage(serverSettings.lang, "ERROR"))] });
+                }
+
+                let petInfo = await interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id]);
+                petInfo = petInfo[0];
+                // check last feed timing
+                let lastFeed = utility.strToDate(userInfo.last_feed_time);
+
+                let now = new Date();
+
+                // check hour difference between now and last feed
+                let hourDiff = Math.abs(now - lastFeed) / 36e5;
+
+                if (hourDiff > 1) {
+                    petInfo.remaining_feed += hourDiff * 2;
+                }
+
+                if (petInfo.remaining_feed > 4) {
+                    petInfo.remaining_feed = 4;
+                }
+
+                // check amount greater than remaining feed
+                if (amount > petInfo.remaining_feed) {
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'FAMILIAR_NEXT_FEED').format(petInfo.remaining_feed, 2))] });
+                }
+
+                let newStamina = petInfo.stamina + amount * 60;
+
+                if (newStamina > petInfo.max_stamina) {
+                    newStamina = petInfo.max_stamina;
+                }
+
+                petInfo.remaining_feed -= amount;
+
+                await interaction.client.databaseEditData("update users_pet set last_feed_time = ?, stamina = ?, remaining_feed = ? where user_id = ? and pet_id = ?", [utility.dateToStr(now), newStamina, petInfo.remaining_feed, interaction.user.id, userInfo.pet_id]);
+                usedItem = true;
+            } else if (itemInfo.item_name == "Intermediate_Food") {
+                if (['none', '', null, 'null'].includes(userInfo.pet_id)) {
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'FAMILIAR_NOT_EQUIPPED'))] });
+                }
+
+                if (amount > 4) {
+                    return interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "USE_N_AT_A_TIME").format(4), interaction.client.getWordLanguage(serverSettings.lang, "ERROR"))] });
+                }
+
+                let petInfo = await interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id]);
+                petInfo = petInfo[0];
+                // check last feed timing
+                let lastFeed = utility.strToDate(userInfo.last_feed_time);
+
+                let now = new Date();
+
+                // check hour difference between now and last feed
+                let hourDiff = Math.abs(now - lastFeed) / 36e5;
+
+                if (hourDiff > 1) {
+                    petInfo.remaining_feed += hourDiff * 2;
+                }
+
+                if (petInfo.remaining_feed > 4) {
+                    petInfo.remaining_feed = 4;
+                }
+
+                // check amount greater than remaining feed
+                if (amount > petInfo.remaining_feed) {
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'FAMILIAR_NEXT_FEED').format(petInfo.remaining_feed, 2))] });
+                }
+
+                let newStamina = petInfo.stamina + amount * 90;
+
+                if (newStamina > petInfo.max_stamina) {
+                    newStamina = petInfo.max_stamina;
+                }
+
+                petInfo.remaining_feed -= amount;
+
+                await interaction.client.databaseEditData("update users_pet set last_feed_time = ?, stamina = ?, remaining_feed = ? where user_id = ? and pet_id = ?", [utility.dateToStr(now), newStamina, petInfo.remaining_feed, interaction.user.id, userInfo.pet_id]);
+                usedItem = true;
+            } else if (itemInfo.item_name == "Premium_Food") {
+                if (['none', '', null, 'null'].includes(userInfo.pet_id)) {
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'FAMILIAR_NOT_EQUIPPED'))] });
+                }
+
+                if (amount > 4) {
+                    return interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "USE_N_AT_A_TIME").format(4), interaction.client.getWordLanguage(serverSettings.lang, "ERROR"))] });
+                }
+
+                let petInfo = await interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id]);
+                petInfo = petInfo[0];
+                // check last feed timing
+                let lastFeed = utility.strToDate(userInfo.last_feed_time);
+
+                let now = new Date();
+
+                // check hour difference between now and last feed
+                let hourDiff = Math.abs(now - lastFeed) / 36e5;
+
+                if (hourDiff > 1) {
+                    petInfo.remaining_feed += hourDiff * 2;
+                }
+
+                if (petInfo.remaining_feed > 4) {
+                    petInfo.remaining_feed = 4;
+                }
+
+                // check amount greater than remaining feed
+                if (amount > petInfo.remaining_feed) {
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'FAMILIAR_NEXT_FEED').format(petInfo.remaining_feed, 2))] });
+                }
+
+                let newStamina = petInfo.stamina + amount * 100;
+                let newHappiness = petInfo.happiness + amount * 30;
+
+                if (newStamina > petInfo.max_stamina) {
+                    newStamina = petInfo.max_stamina;
+                }
+
+                if (newHappiness > petInfo.max_happiness) {
+                    newHappiness = petInfo.max_happiness;
+                }
+
+                petInfo.remaining_feed -= amount;
+
+                await interaction.client.databaseEditData("update users_pet set last_feed_time = ?, stamina = ?, happiness = ?, remaining_feed = ? where user_id = ? and pet_id = ?", [utility.dateToStr(now), newStamina, newHappiness, petInfo.remaining_feed, interaction.user.id, userInfo.pet_id]);
+                usedItem = true;
+            } else if (itemInfo.item_name == "Familiar_Toy") {
+                if (['none', '', null, 'null'].includes(userInfo.pet_id)) {
+                    return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'FAMILIAR_NOT_EQUIPPED'))] });
+                }
+
+                if (amount > 10) {
+                    return interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, "USE_N_AT_A_TIME").format(10), interaction.client.getWordLanguage(serverSettings.lang, "ERROR"))] });
+                }
+
+                let petInfo = await interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id]);
+                petInfo = petInfo[0];
+
+                let newHappiness = petInfo.happiness + amount * 10;
+
+                if (newHappiness > petInfo.max_happiness) {
+                    newHappiness = petInfo.max_happiness;
+                }
+
+                console.log(newHappiness);
+
+                await interaction.client.databaseEditData("update users_pet set happiness = ? where user_id = ? and pet_id = ?", [newHappiness, interaction.user.id, userInfo.pet_id]);
+                usedItem = true;
+            }
+            else {
                 return await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_USE_BLOCK'), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] });
             }
 
             if (usedItem) {
                 await interaction.client.databaseEditData("update user_inventory set quantity = quantity - ? where user_id = ? and item_name = ?", [amount, userInfo.user_id, itemInfo.item_name]);
-                await userDailyLogger(interaction, interaction.user, "use", "Used " + amount + " " + itemInfo.item_name + ".");
+                await userDailyLogger(interaction, interaction.user, "use", "Used " + amount + " " + itemInfo.item_name.replaceAll("_", " ") + ".");
                 return await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ITEM_USED').format(amount, itemInfo.item_name.replaceAll("_", " ")), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESS'))], components: [] });
             }
         } catch (error) {

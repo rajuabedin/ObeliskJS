@@ -95,7 +95,7 @@ module.exports = {
             } else {
                 shopItemInfo = shopItemInfo[0];
                 await interaction.editReply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'BUY_MONKEY').format(quantity, shopItemInfo.name.replaceAll("_", " "), "https://obelisk.club/", shopItemInfo.price * quantity, icons[shopItemInfo.currency]), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRMATION'))], components: [rowYesNo] });
-                buttonHandler(interaction, serverSettings, shopItemInfo, quantity)
+                buttonHandler(interaction, serverSettings, shopItemInfo, quantity, msg)
             }
         } catch (error) {
             let errorID = await errorLog.error(error, interaction);
@@ -106,10 +106,10 @@ module.exports = {
 function buttonHandler(interaction, serverSettings, shopItemInfo, quantity, msg) {
     var bought = false;
 
-    const collector = msg.createMessageComponentCollector({ time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 40000 });
 
     collector.on('collect', async i => {
-        await i.defferUpdate();
+        await i.deferUpdate();
         if (i.user.id !== interaction.user.id) return;
         if (i.customId === 'no') {
             collector.stop();

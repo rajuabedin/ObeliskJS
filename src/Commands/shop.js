@@ -121,14 +121,14 @@ function buttonHandler(userInfo, interaction, serverSettings, shopData, msg) {
     let index = 0;
     var maxPages = shopData.length - 1;
 
-    const collector = msg.createMessageComponentCollector({ time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 40000 });
 
     collector.on('collect', async i => {
-        await i.defferUpdate();
+        await i.deferUpdate();
         if (i.user.id != interaction.user.id) {
             return;
         }
-        collector.resetTimer({ time: 15000 });
+        collector.resetTimer({ time: 40000 });
         if (i.customId === 'left')
             index--;
         else if (i.customId === 'right')

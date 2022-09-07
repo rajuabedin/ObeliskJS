@@ -53,9 +53,9 @@ module.exports = {
             // get confirmation they read skills
             await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'CREATE_CREATING').format(interaction.options.getString("class")), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-            collector = msg.createMessageComponentCollector({ time: 15000 });
+            collector = msg.createMessageComponentCollector({ time: 40000 });
             collector.on('collect', async i => {
-                i.defferUpdate();
+                i.deferUpdate();
                 if (i.user.id !== interaction.user.id) return;
                 if (i.customId === "yes") {
                     await interaction.client.databaseEditData("INSERT INTO users (user_id, username, class, gender, race, level, exp, gold) VALUES (?,?,?,?,?,?,?,?)",

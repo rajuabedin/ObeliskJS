@@ -141,8 +141,8 @@ module.exports = {
                             .then(data => { return data });
 
                     }
-                    if (!['none', ''].includes(userInfo.pet_id)) {
-                        var petInfo = interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id.toUpperCase()]);
+                    if (!['none', '', null, 'null'].includes(userInfo.pet_id)) {
+                        var petInfo = await interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id.toUpperCase()]);
                         petInfo = petInfo[0];
                         if (petInfo !== undefined) {
                             let response = ""
@@ -173,8 +173,8 @@ module.exports = {
             } else {
                 var interactionReplied = false;
                 // familiar stats
-                if (!['none', ''].includes(userInfo.pet_id)) {
-                    var petInfo = interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id.toUpperCase()]);
+                if (!['none', '', null, 'null'].includes(userInfo.pet_id)) {
+                    var petInfo = await interaction.client.databaseSelectData("select * from users_pet where pet_id = ?", [userInfo.pet_id.toUpperCase()]);
                     petInfo = petInfo[0];
                     if (petInfo !== undefined) {
                         if (petInfo.happiness > 50) {
@@ -199,16 +199,11 @@ module.exports = {
 
                         } else {
                             await userDailyLogger(interaction, interaction.user, "familiar", "Familiar Unequipped low happiness")
-                            await interaction.client.databaseEditData("update users set pet_id = 'null' where user_id = ?", [interaction.user.id])
-                            if (interactionReplied) {
-                                await interaction.editReply({
-                                    embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "FAMILIAR_UNEQUIPPED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: []
-                                })
-                            } else {
-                                interactionReplied = true;
-                                await interaction.editReply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "FAMILIAR_UNEQUIPPED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: [] })
-                            }
-                            await new Promise(r => setTimeout(r, 2000));
+                            await interaction.client.databaseEditData("update users set pet_id = 'none' where user_id = ?", [interaction.user.id])
+                            await interaction.followUp({
+                                embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "FAMILIAR_UNEQUIPPED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: [], ephemeral: true
+                            })
+                            await utility.updateUserStatsFamiliar(interaction, userInfo, petInfo);
                         }
                     }
                 }

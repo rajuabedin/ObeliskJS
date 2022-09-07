@@ -105,10 +105,10 @@ module.exports = {
             // patreon
             const donatorData = await interaction.client.databaseSelectData("select * from patreon_donators where user_id = ?", [interaction.user.id]);
 
-            if (donatorData[0] !== undefined) {
+            if (donatorData.length > 0) {
                 userIsDonator = true;
             } else {
-                userIsDonator = getUserInfoDonator(interaction.user.id);
+                userIsDonator = await getUserInfoDonator(interaction.user.id);
             }
 
             var userIsBooster = false;
@@ -158,6 +158,30 @@ module.exports = {
             await interaction.client.databaseEditData("update daily set daily_stack = ?, date = ? WHERE user_id = ?", [multiplier, dateStr, interaction.user.id])
             await interaction.editReply({ embeds: [interaction.client.greenEmbedImage(interaction.client.getWordLanguage(serverSettings.lang, 'DAILY_REWARD_GOLD').format(rewards, multiplier), interaction.client.getWordLanguage(serverSettings.lang, 'DAILY_REWARD'), interaction.user)] })
 
+
+            var dateStr =
+                ("00" + tomorrow.getDate()).slice(-2) + "/" +
+                ("00" + (tomorrow.getMonth() + 1)).slice(-2) + "/" +
+                tomorrow.getFullYear() + " " +
+                ("00" + tomorrow.getHours()).slice(-2) + ":" +
+                ("00" + tomorrow.getMinutes()).slice(-2) + ":" +
+                ("00" + tomorrow.getSeconds()).slice(-2);
+            let userTask = await interaction.client.databaseSelectData("select * from task where user_id = ?", [interaction.user.id]);
+            userTask = userTask[0];
+            let elapsedTimeFromTaskStarted = 0;
+
+            if (userTask.time !== "None") {
+                elapsedTimeFromTaskStarted = Math.floor((interaction.client.strToDate(userTask.time).getTime() - date.getTime()));
+                // check remaining time 
+                if (elapsedTimeFromTaskStarted < 1) {
+                    // reset task
+                    await interaction.client.databaseEditData("update task set daily = 1, vote_bot= 0, hunt = 0, gathering=0, status = 'open', time = ? where user_id = ?", [dateStr, interaction.user.id]);
+                } else {
+                    // update task
+                    await interaction.client.databaseEditData("update task set daily = daily + 1 where user_id = ?", [interaction.user.id]);
+                }
+            }
+
         } catch (error) {
             let errorID = await errorLog.error(error, interaction);
             await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });
@@ -203,14 +227,18 @@ async function getUserInfoDonator(userId) {
     })
         .then(response => response.json())
         .then(data => { return data });
-    if (data.success === true && data.Data[0].roles.includes("800399000141430796")) {
-        return true;
-    } else if (data.success === true && data.Data[0].roles.includes("772832085231665194")) {
-        return true;
-    } else if (data.success === true && data.Data[0].roles.includes("772832009851895810")) {
-        return true;
-    } else if (data.success === true && data.Data[0].roles.includes("760205852585099275")) {
-        return true;
+    if (data.success === true) {
+        if (data.Data[0].roles.includes("800399000141430796")) {
+            return true;
+        } else if (data.Data[0].roles.includes("772832085231665194")) {
+            return true;
+        } else if (data.Data[0].roles.includes("772832009851895810")) {
+            return true;
+        } else if (data.Data[0].roles.includes("760205852585099275")) {
+            return true;
+        } else {
+            return false;
+        }
     } else {
         return false;
     }

@@ -24,6 +24,23 @@ class Client extends Discord.Client {
         this.wait = require('util').promisify(setTimeout);
         this.random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
 
+        this.colors = {
+            red: '0xed4245',
+            green: '0x14e188',
+            blue: '0x009dff',
+            yellow: '0xfce703',
+            white: '0xfafafa',
+            black: '0xfafafa',
+            gray: '0xfafafa',
+            purple: '0xfafafa',
+            orange: '0xFFA500',
+            pink: '0xfafafa',
+            brown: '0xfafafa',
+            cyan: '0xfafafa',
+            lime: '0xfafafa',
+            magenta: '0xfafafa'
+        }
+
         this.messagesToDM = []
 
         this.developersID = ['145849120698007553', '400614330921648132'];
@@ -33,7 +50,7 @@ class Client extends Discord.Client {
             user: process.env.DB_USER,
             password: process.env.DB_PASSWORD,
             database: process.env.DB_DATABASE,
-            connectionLimit: 20
+            connectionLimit: 10
         });
 
         this.defaultEmojis = { "credit": "<:coin2:784486506051010561>", "units": "<:Obelisk:784486454398943232>" }
@@ -176,6 +193,15 @@ class Client extends Discord.Client {
         const textToEmbed = new Discord.MessageEmbed()
             .setColor('0x14e188')
             .setAuthor({ name: tittle, iconURL: user.avatarURL() })
+            .setURL('https://obelisk.club/')
+            .setDescription(text)
+        return textToEmbed
+    }
+
+    orangeEmbed(text, tittle = "") {
+        const textToEmbed = new Discord.MessageEmbed()
+            .setColor(this.colors.orange)
+            .setTitle(tittle)
             .setURL('https://obelisk.club/')
             .setDescription(text)
         return textToEmbed

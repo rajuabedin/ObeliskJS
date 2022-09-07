@@ -9,8 +9,8 @@ require('dotenv').config();
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('ping')
-        .setDescription('Ping command!'),
+        .setName('vote')
+        .setDescription('Vote to get rewards!'),
 
     async execute(interaction, userInfo, serverSettings) {
         String.prototype.format = function () {
@@ -21,7 +21,15 @@ module.exports = {
         };
         let msg = await interaction.deferReply({ fetchReply: true });
         try {
-            await interaction.reply({ embeds: [interaction.client.redEmbed(`Pong ${interaction.client.ws.ping} ms!`)], ephemeral: true });
+            let embed = new MessageEmbed()
+                .setTitle(interaction.client.getWordLanguage(serverSettings.lang, 'VOTE_TITLE'))
+                .setDescription(interaction.client.getWordLanguage(serverSettings.lang, 'VOTE').format("30x Aurora Fragment", "1x Loot Box Tier II", "https://top.gg/bot/735090182893862954/vote", "https://top.gg/servers/749698569304277155/vote"))
+                .setFooter({
+                    text: interaction.client.getWordLanguage(serverSettings.lang, 'VOTE_FOOTER'),
+                })
+                .setThumbnail(interaction.client.user.avatarURL())
+                .setColor(interaction.client.colors.green);
+            await interaction.editReply({ embeds: [embed] });
         } catch (error) {
             let errorID = await errorLog.error(error, interaction);
             await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'ERROR_NORMAL_ID').format(errorID), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))], ephemeral: true });

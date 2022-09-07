@@ -75,6 +75,14 @@ class NewLogger {
         }
     }
 
+    async customDiscord(response, interaction) {
+        try {
+            return await interaction.client.databaseEditDataReturnID('insert into bot_log (exceptionType, exceptionMessage, fullException, commandName, userID) values (?,?,?,?,?)', ['discordAPI', response.message, response.errors, interaction.commandName, interaction.user.id]);
+        } catch (error) {
+            loggerBase.error(message, interaction.user.id);
+        }
+    }
+
     async custom1(message) {
         loggerBase.error(message.error);
     }

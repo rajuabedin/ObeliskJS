@@ -9,7 +9,7 @@ require('dotenv').config();
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('send')
-        .setDescription('Use thid command to send gold or items to another player')
+        .setDescription('Use this command to send gold or items to another player')
         .addUserOption(options => options
             .setName('player')
             .setDescription('The player you want to send the item/gold to')
@@ -107,10 +107,10 @@ module.exports = {
                 // confirm want to send
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SEND_GOLD_QUESTION').format(quantity, `<@!${interaction.options.getUser('player').id}>`), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id !== interaction.user.id) return;
 
                     if (i.customId === "yes") {
@@ -208,10 +208,10 @@ module.exports = {
                 let continueCode = false;
                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SEND_ITEM_QUESTION').format(quantity, userItemInfo.item_name.replaceAll("_", " "), `<@!${interaction.options.getUser('player').id}>`), interaction.client.getWordLanguage(serverSettings.lang, 'CONFIRM'))], components: [rowYesNo] })
 
-                collector = msg.createMessageComponentCollector({ time: 15000 });
+                collector = msg.createMessageComponentCollector({ time: 40000 });
                 let awaitConfirmation = true;
                 collector.on('collect', async i => {
-                    await i.defferUpdate();
+                    await i.deferUpdate();
                     if (i.user.id !== interaction.user.id) return;
                     if (i.customId === "yes") {
                         continueCode = true;

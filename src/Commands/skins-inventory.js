@@ -24,7 +24,7 @@ module.exports = {
         )
         .addSubcommand(subcommand => subcommand
             .setName('use', 'use')
-            .setDescription("Change you profile theme")
+            .setDescription("Change your profile theme")
             .addStringOption(option => option
                 .setName('name', 'name')
                 .setDescription("Skin Name")
@@ -152,7 +152,7 @@ module.exports = {
                         if (stringData === "") {
                             stringData = interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_USING').format(userInfo.selected_bg) + "\n"
                         }
-                        stringData += `\n**SKIN ID**\`${userSkinInventory[i].skin_name}\`\n${interaction.client.getWordLanguage(serverSettings.lang, "QUANTITY")} - ${userSkinInventory[i].quantity} [${interaction.client.getWordLanguage(serverSettings.lang, 'DEMO')}](https://obelisk.club/skins.html#atvImg__${userSkinInventory[i].id})`
+                        stringData += `\n⦿**SKIN ID** \`${userSkinInventory[i].skin_name}\`\n${userSkinInventory[i].tradable == "Yes" ? "Tradable: Yes" : "Tradable: No"}\n${interaction.client.getWordLanguage(serverSettings.lang, "QUANTITY")} - ${userSkinInventory[i].quantity} [${interaction.client.getWordLanguage(serverSettings.lang, 'DEMO')}](https://obelisk.club/skins.html#atvImg__${userSkinInventory[i].id})\n`
 
                         if (((i + 1) % itemsPerPage) == 0 || i === userSkinInventory.length - 1) {
                             newInventory.push(stringData);
@@ -190,7 +190,7 @@ module.exports = {
                             isADonator = true;
                         }
                     }
-                    if (/[a-zA-Z]/g.test(skinInventory.skin_name) || isADonator) {
+                    if (/[a-zA-Z]/g.test(userInfo.selected_bg) || isADonator) {
                         await interaction.client.databaseEditData(`insert into user_skins (user_id, skin_name, quantity) values (?, ?,?) ON DUPLICATE KEY update quantity = quantity + ?`, [interaction.user.id, userInfo.selected_bg, 1, 1]);
                         await userDailyLogger(interaction, interaction.user, "skins", `Skins [${userInfo.selected_bg}] added back to your skin inventory`);
                     }
@@ -264,12 +264,17 @@ module.exports = {
                     const collector = msg.createMessageComponentCollector({ time: 20000 });
 
                     collector.on('collect', async i => {
-                        await i.defferUpdate();
+                        await i.deferUpdate();
                         if (i.user.id != interaction.user.id) {
                             return;
                         }
                         if (i.customId === 'yes') {
-                            if (interaction.options.getString('trade_for').toLowerCase() === "gold" && value <= tradeUserData.gold) {
+                            if (interaction.options.getString('trade_for').toLowerCase() === "gold") {
+                                if (value > tradeUserData.gold) {
+                                    await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO_TRADE_GOLD').format(`<@${tradeUser.id}>`, value), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
+                                    await userDailyLogger(interaction, interaction.user, "skins", `Traded cancelled ${tradeUser.username} does not have enough gold`);
+                                    return;
+                                }
                                 await interaction.client.databaseEditData(`update users set gold = gold + ? where user_id = ?`, [value, interaction.user.id]);
                                 await interaction.client.databaseEditData(`update users set gold = gold - ? where user_id = ?`, [value, tradeUser.id]);
                                 await interaction.client.databaseEditData(`update user_skins set quantity = quantity - ? where user_id = ? and skin_name = ?`, [1, interaction.user.id, skinData.skin_name]);
@@ -277,13 +282,9 @@ module.exports = {
                                 await userDailyLogger(interaction, tradeUser, "skins", `Traded [${value} gold] for [${skinData.skin_name}] to ${interaction.user.username}`);
                                 await userDailyLogger(interaction, interaction.user, "skins", `Traded [${skinData.skin_name}] for [${value} gold] to ${tradeUser.username}`);
                                 await interaction.editReply({ embeds: [interaction.client.greenEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_TRADE_SUC'), interaction.client.getWordLanguage(serverSettings.lang, 'SUCCESSFUL'))] })
-                            } else {
-                                await interaction.editReply({ embeds: [interaction.client.redEmbed(interaction.client.getWordLanguage(serverSettings.lang, 'SKIN_NO_TRADE_GOLD').format(`<@${tradeUser.id}>`, value), interaction.client.getWordLanguage(serverSettings.lang, 'ERROR'))] })
-                                await userDailyLogger(interaction, interaction.user, "skins", `Traded cancelled ${tradeUser.username} does not have enough gold`);
                             }
 
                             if (interaction.options.getString('trade_for').toLowerCase() === "skin") {
-                                console.log("here")
                                 await interaction.client.databaseEditData(`update user_skins set quantity = quantity - 1 where user_id = ? and skin_name = ?`, [interaction.user.id, skinData.skin_name]);
                                 await interaction.client.databaseEditData(`insert into user_skins (user_id, skin_name, quantity) values (?, ?,1) ON DUPLICATE KEY update quantity = quantity + 1`, [tradeUser.id, skinData.skin_name]);
                                 await interaction.client.databaseEditData(`update user_skins set quantity = quantity - 1 where user_id = ? and skin_name = ?`, [tradeUser.id, tradeSkinData.skin_name]);
@@ -320,14 +321,14 @@ function buttonHandler(userInfo, interaction, serverSettings, userSkinInventory,
     let index = 0;
     var maxPages = userSkinInventory.length - 1;
 
-    const collector = msg.createMessageComponentCollector({ time: 15000 });
+    const collector = msg.createMessageComponentCollector({ time: 40000 });
 
     collector.on('collect', async i => {
-        await i.defferUpdate();
+        await i.deferUpdate();
         if (i.user.id != interaction.user.id) {
             return;
         }
-        collector.resetTimer({ time: 15000 });
+        collector.resetTimer({ time: 40000 });
         if (i.customId === 'left')
             index--;
         else if (i.customId === 'right')

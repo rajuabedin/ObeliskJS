@@ -143,7 +143,7 @@ module.exports = {
                     var array = [];
 
                     collector.on('collect', async i => {
-                        await i.defferUpdate();
+                        await i.deferUpdate();
                         if (i.user.id != interaction.user.id) {
                             return;
                         }
@@ -329,10 +329,10 @@ module.exports = {
                                     await interaction.editReply({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "BUFFS_DEATH_EXPIRED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: [rowYesNo] })
                                 }
 
-                                collector = msg.createMessageComponentCollector({ time: 15000 });
+                                collector = msg.createMessageComponentCollector({ time: 40000 });
 
                                 collector.on('collect', async i => {
-                                    await i.defferUpdate();
+                                    await i.deferUpdate();
                                     if (i.user.id != interaction.user.id) {
                                         return;
                                     }
@@ -443,7 +443,7 @@ module.exports = {
 
 
                     // familiar stats
-                    if (!['none', ''].includes(userInfo.pet_id)) {
+                    if (!['none', '', null, 'null'].includes(userInfo.pet_id)) {
                         var petInfo = await interaction.client.databaseSelectData("select * from users_pet where pet_id = ? and user_id = ?", [userInfo.pet_id.toUpperCase(), interaction.user.id]);
                         petInfo = petInfo[0];
                         if (petInfo !== undefined) {
@@ -468,9 +468,13 @@ module.exports = {
                                 }
                             } else {
                                 await userDailyLogger(interaction, interaction.user, "familiar", "Familiar Unequipped low happiness")
-                                await interaction.client.databaseEditData("update users set pet_id = 'null' where user_id = ?", [interaction.user.id])
-                                await interaction.followUp({ embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "FAMILIAR_UNEQUIPPED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: [], ephemeral: true })
-                                await new Promise(r => setTimeout(r, 2000));
+                                await interaction.client.databaseEditData("update users set pet_id = 'none' where user_id = ?", [interaction.user.id])
+                                await interaction.followUp({
+                                    embeds: [interaction.client.yellowEmbed(interaction.client.getWordLanguage(serverSettings.lang, "FAMILIAR_UNEQUIPPED"), interaction.client.getWordLanguage(serverSettings.lang, "INFORMATION"))], components: [], ephemeral: true
+                                })
+                                await utility.updateUserStatsFamiliar(interaction, userInfo, petInfo);
+                                userInfo = await interaction.client.databaseSelectData("select * from users where user_id = ?", [interaction.user.id]);
+                                userInfo = userInfo[0];
                             }
                         }
                     }
@@ -712,6 +716,15 @@ module.exports = {
 
                         playerTurnDmg = Math.ceil(getRandomNumberBetween(playerMaxDmg * 0.8, playerMaxDmg));
 
+                        // check if dmg lower than 0
+                        if (playerTurnDmg < 0) {
+                            playerTurnDmg = 0;
+                        }
+                        // check if grater than max dmg
+                        if (playerTurnDmg > playerMaxDmg) {
+                            playerTurnDmg = playerMaxDmg;
+                        }
+
                         monsterTurnDmg = Math.ceil(getRandomNumberBetween(monsterATK * 0.85, monsterATK));
 
                         monsterTurnDmg = monsterTurnDmg * monsterDMGMultiplier;
@@ -724,7 +737,6 @@ module.exports = {
 
                         if (turnCrit) {
                             playerTurnDmg += playerTurnDmg;
-                        } else {
                         }
 
                         huntTurnlog += `\n${selectedMonster.name} DMG -> [${monsterTurnDmg}]\n-----------------------------------------------------\n${interaction.user.username} DODGE % -> [${playerDodgeRate}]\n${interaction.user.username} CRIT % -> [${playerCritRate}]\n${selectedMonster.name} DODGE % -> [${monsterDodgeRate}]\n-----------------------------------------------------`;
@@ -737,7 +749,7 @@ module.exports = {
                         }
 
                         if (userInfo.class === "Assassin" && playerDodged && !monsterDodged) {
-                            playerTemTurnDmg = Math.ceil(playerTurnDmg * 1.5 * monsterTurnDmg) - playerTurnDmg;
+                            playerTemTurnDmg = Math.ceil(playerTurnDmg * 1.5 + monsterTurnDmg) - playerTurnDmg;
                             playerTurnDmg += playerTemTurnDmg;
                             huntTurnlog += `\n-----------------------------------------------------\nASSASSIN PASSIVE DMG BOOST -> [${playerTemTurnDmg}]\nNEW ${interaction.user.username} DMG -> [${playerTurnDmg}]\n-----------------------------------------------------`;
 
@@ -783,14 +795,15 @@ module.exports = {
                             huntTurnlog += `\n<< ${interaction.user.username} Evaded >>`;
                             huntTurnlog += `\n>> ${interaction.user.username} HP -> [${playerHP}/${userInfo.hp}] <<`;
                         } else {
-                            monsterTurnDmg = monsterTurnDmg - userInfo.armor;
                             if (rage > 99) {
                                 monsterTurnDmg = monsterTurnDmg * 3;
+                                huntTurnlog += `\n${selectedMonster.name} rage reached max capacity, ${selectedMonster.name} DMG increased to [${monsterTurnDmg}]`;
                                 rage = 0;
                             }
                             if (monsterTurnDmg < 0) {
                                 monsterTurnDmg = 0;
                             }
+                            monsterTurnDmg = monsterTurnDmg - userInfo.armor;
                             huntTurnlog += `\n${interaction.user.username} ARMOR CAN SUBTRACT [${userInfo.armor}] DMG\nNEW ${selectedMonster.name} DMG -> [${monsterTurnDmg}]`;
                             playerHP -= monsterTurnDmg;
 
@@ -897,8 +910,8 @@ module.exports = {
                                         if (todoCurrent < todoMax) {
                                             if (["Hunt", "Q Hunt"].includes(questData.type) && selectedMonster.name === todoName) {
                                                 todoCurrent += 1;
-                                            } else if (["Gather", "Q Gather"].includes(questData.type) && monsterFoundDropsName.includes(todoName)) {
-                                                tempIndex = monsterFoundDropsName.indexOf(todoName);
+                                            } else if (["Gather", "Q Gather"].includes(questData.type) && monsterFoundDropsName.includes(todoName.replaceAll(" ", "_"))) {
+                                                tempIndex = monsterFoundDropsName.indexOf(todoName.replaceAll(" ", "_"));
                                                 todoCurrent += monsterFoundDropsQuantity[tempIndex];
                                             }
 
@@ -1016,7 +1029,7 @@ module.exports = {
                                 { name: interaction.client.getWordLanguage(serverSettings.lang, 'DIED_COST'), value: `\`\`\`css\nEXP -> [${userInfo.exp}] GOLD -> [${goldLost}]\`\`\``, inline: false }
                             )
                         await userDailyLogger(interaction, interaction.user, "hunt", `Player Died. Penalties EXP -> [${userInfo.exp}] GOLD -> [${goldLost}]`)
-                        await interaction.client.databaseEditData("update users set gold = gold - ?, exp = ? where user_id = ?", [goldLost, userInfo.exp, interaction.user.id])
+                        await interaction.client.databaseEditData("update users set gold = gold - ?, exp = ?, current_hp = hp, current_mp = mp where user_id = ?", [goldLost, 0, interaction.user.id])
                     } else if (playerDied && deathHuntCount != 0) {
                         showLog = true;
                         if (deathHuntCount === -1) {
@@ -1033,7 +1046,7 @@ module.exports = {
                             )
                         await userDailyLogger(interaction, interaction.user, "hunt", `Player Died. Protection found, no penalties applied.`)
                     } else if (monsterRunAway && playerHP > 1) {
-                        huntEndEmbed = interaction.client.redEmbed(`**${interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_MONSTER_RUN_T')}**\n${interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_MONSTER_RUN')}`)
+                        huntEndEmbed = interaction.client.orangeEmbed(`**${interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_MONSTER_RUN_T')}**\n${interaction.client.getWordLanguage(serverSettings.lang, 'HUNT_MONSTER_RUN')}`)
                         await userDailyLogger(interaction, interaction.user, "hunt", `Monster run away.`)
                         showLog = true;
                     }
