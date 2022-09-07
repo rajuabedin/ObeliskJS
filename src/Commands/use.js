@@ -991,7 +991,6 @@ module.exports = {
                     newHappiness = petInfo.max_happiness;
                 }
 
-                console.log(newHappiness);
 
                 await interaction.client.databaseEditData("update users_pet set happiness = ? where user_id = ? and pet_id = ?", [newHappiness, interaction.user.id, userInfo.pet_id]);
                 usedItem = true;
